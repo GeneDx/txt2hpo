@@ -1,22 +1,24 @@
-from phenopy.obo import restore
-from phenopy.score import Scorer
+
 from nltk.stem import RegexpStemmer
 import re
 import spacy
+import os
+from phenopy import config
+from phenopy.obo import restore
 
-hpo = restore('/home/vgainullin/.phenopy/data/hpo_network.pickle')
-scorer = Scorer(hpo)
+network_file = os.path.join(config.data_directory, 'hpo_network.pickle')
+hpo = restore(network_file)
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$', min=6)
 nlp = spacy.load('en')
 
-def build_search_tree(hpo):
+
+def build_search_tree():
     """
     Build stemmed, search tree for phenotypes / n-grams
     :param hpo: hpo object from phenopy
     :return: nested dictionary
     """
-
     terms = {}
     for node in hpo:
         term = hpo.node[node]['name']
