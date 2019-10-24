@@ -17,7 +17,6 @@ with open("hpo_parsed_tree.pkl", "rb") as fh:
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$', min=6)
 max_search = 5
 
-
 def search_hp(tokens):
     results = []
     if not tokens:
@@ -34,9 +33,6 @@ def search_hp(tokens):
                 if try_term in terms[token][i].keys():
                     results.append(terms[token][i][try_term])
     return results
-
-
-test = "Patient abnormality body height with ectopic kidney abnormality of the bladder and abnormal scrotum."
 
 
 def extract_hpos(text):

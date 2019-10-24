@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-from phenopy import __project__, __version__
+from phenner import __project__, __version__
 
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name=__project__,
+name=__project__,
     packages=find_packages(),
     version=__version__,
     description='Phenotype extraction using Named Entity Recognition',
