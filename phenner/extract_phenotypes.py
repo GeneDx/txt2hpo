@@ -1,12 +1,12 @@
 import spacy
-from phenner import build_tree
+from phenner.build_tree import build_search_tree
 from nltk.stem import RegexpStemmer
 
 nlp = spacy.load('en')
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$', min=6)
 max_search = 5
-terms = build_tree()
+terms = build_search_tree()
 
 def search_hp(tokens):
     results = []
