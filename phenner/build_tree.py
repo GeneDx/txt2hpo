@@ -1,11 +1,12 @@
 
-from phenner.config import logger
+
 from nltk.stem import RegexpStemmer
 import re
 import spacy
 import os
 import sys
 from phenopy import config as phenopy_config
+from phenner.config import logger
 from phenopy.obo import restore
 
 
@@ -49,7 +50,7 @@ def build_search_tree():
             tokens = [x for x in tokens if not x.is_punct]
             tokens = [x for x in tokens if not x.is_stop]
             tokens = [st.stem(x.lemma_.lower()) for x in tokens]
-            tokens = [st.stem(x.lower()) for x in tokens]
+
             for token in tokens:
                 if token not in terms:
                     terms[token] = {}
@@ -64,6 +65,7 @@ def build_search_tree():
 
 
 def update_progress(progress):
+    # https: // stackoverflow.com / a / 15860757
     barLength = 50 # Modify this to change the length of the progress bar
     status = ""
     if isinstance(progress, int):
