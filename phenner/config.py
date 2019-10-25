@@ -39,7 +39,6 @@ except FileExistsError:
     pass
 
 if not os.path.isfile(os.path.join(config_directory, 'phenner.ini')):
-    config = configparser.ConfigParser()
     config['tree'] = {
         'parsing_tree': os.path.join(
             data_directory,

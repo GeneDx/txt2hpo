@@ -8,18 +8,21 @@ import sys
 from phenopy import config as phenopy_config
 from phenopy.obo import restore
 
+
 network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
 hpo = restore(network_file)
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$', min=6)
 
+
 try:
-    nlp = spacy.load('en')
+    nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 except OSError:
     logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
     from spacy.cli import download
     download('en')
-    nlp = spacy.load('en')
+    nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
+
 
 def build_search_tree():
     """
@@ -32,6 +35,7 @@ def build_search_tree():
     logger.info('Building a stemmed parse tree, this may take a minute, dont worry this is a one time thing \n')
     i = 0
     n_nodes = len(hpo.nodes)
+
     for node in hpo:
         term = hpo.nodes[node]['name']
         if 'synonym' in hpo.nodes[node]:
@@ -45,6 +49,7 @@ def build_search_tree():
             tokens = [x for x in tokens if not x.is_punct]
             tokens = [x for x in tokens if not x.is_stop]
             tokens = [st.stem(x.lemma_.lower()) for x in tokens]
+            tokens = [st.stem(x.lower()) for x in tokens]
             for token in tokens:
                 if token not in terms:
                     terms[token] = {}

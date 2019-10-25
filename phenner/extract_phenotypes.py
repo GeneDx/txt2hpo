@@ -18,9 +18,10 @@ max_search = 5
 
 try:
     terms = pickle.load(config.get('tree', 'parsing_tree'))
-except (FileNotFoundError, TypeError,configparser.NoSectionError):
+except (FileNotFoundError, TypeError, configparser.NoSectionError):
     terms = build_search_tree()
-    pickle.dump(terms, config.get('tree', 'parsing_tree'))
+    with open(config.get('tree', 'parsing_tree'), 'wb') as fh:
+        pickle.dump(terms, fh)
 
 
 def search_hp(tokens):
