@@ -13,6 +13,7 @@ pandas = "*"
 nltk = "*"
 spacy = "*"
 phenopy = "*"
+networkx = "2.3"
 
 [requires]
 python_version = "3.7"

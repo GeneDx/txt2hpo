@@ -24,6 +24,11 @@ except OSError:
     download('en')
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
+nlp.vocab["first"].is_stop = False
+nlp.vocab["second"].is_stop = False
+nlp.vocab["third"].is_stop = False
+nlp.vocab["fourth"].is_stop = False
+nlp.vocab["fifth"].is_stop = False
 
 def build_search_tree():
     """
@@ -47,16 +52,17 @@ def build_search_tree():
         names = [term] + synonyms
         for name in names:
             tokens = nlp(name)
-            tokens = [x for x in tokens if not x.is_punct]
-            tokens = [x for x in tokens if not x.is_stop]
-            tokens = [st.stem(x.lemma_.lower()) for x in tokens]
-
+            tokens = [st.stem(x.lemma_.lower()) for x in tokens if not x.is_stop and not x.is_punct]
             for token in tokens:
                 if token not in terms:
                     terms[token] = {}
                 if len(tokens) not in terms[token]:
                     terms[token][len(tokens)] = {}
-                terms[token][len(tokens)][' '.join(sorted(tokens))] = node
+                name_identifier = ' '.join(sorted(tokens))
+                if name_identifier not in terms[token][len(tokens)]:
+                    terms[token][len(tokens)][name_identifier] = [node]
+                else:
+                    terms[token][len(tokens)][name_identifier].append(node)
         i += 1
         progress = i/n_nodes
         update_progress(progress)

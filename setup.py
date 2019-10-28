@@ -26,7 +26,8 @@ name=__project__,
         'phenopy',
         'pandas',
         'nltk',
-        'spacy'
+        'spacy',
+        'networkx'
 
     ]
 )
