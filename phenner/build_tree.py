@@ -13,7 +13,7 @@ from phenopy.obo import restore
 network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
 hpo = restore(network_file)
 
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$', min=6)
+st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$', min=6)
 
 
 try:
@@ -29,6 +29,9 @@ nlp.vocab["second"].is_stop = False
 nlp.vocab["third"].is_stop = False
 nlp.vocab["fourth"].is_stop = False
 nlp.vocab["fifth"].is_stop = False
+nlp.vocab["front"].is_stop = False
+nlp.vocab["more"].is_stop = False
+nlp.vocab["less"].is_stop = False
 
 def build_search_tree():
     """
@@ -38,7 +41,7 @@ def build_search_tree():
     """
     terms = {}
     print("")
-    logger.info('Building a stemmed parse tree, this may take a minute, dont worry this is a one time thing \n')
+    logger.info('Building a stemmed parse tree, this may take a few seconds, dont worry this is a one time thing \n')
     i = 0
     n_nodes = len(hpo.nodes)
 

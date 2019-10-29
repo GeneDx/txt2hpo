@@ -13,7 +13,10 @@ except (FileNotFoundError,KeyError):
 
 def P(word, N=sum(WORDS.values())):
     "Probability of `word`."
-    return WORDS[word] / N
+    if word in WORDS:
+        return WORDS[word] / N
+    else:
+        return 0.1/N
 
 
 def correction(word):

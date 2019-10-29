@@ -14,13 +14,18 @@ except OSError:
     download('en')
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
+# these are used in hpo as part of phenotype definition, should keep them
 nlp.vocab["first"].is_stop = False
 nlp.vocab["second"].is_stop = False
 nlp.vocab["third"].is_stop = False
 nlp.vocab["fourth"].is_stop = False
 nlp.vocab["fifth"].is_stop = False
 
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$', min=6)
+nlp.vocab["front"].is_stop = False
+nlp.vocab["more"].is_stop = False
+nlp.vocab["less"].is_stop = False
+
+st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$', min=6)
 max_search = 30
 
 try:
@@ -34,55 +39,96 @@ except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
         pickle.dump(terms, fh)
 
 
-def search_hp(tokens):
-    """
-    search for phenotypes within a list of tokens
-    :param tokens: list of word tokens
-    :return: list of hpo ids
-    """
-    results = []
-    if not tokens:
-        return results
-    token = tokens[0]
-    for i in range(len(tokens) + 1):
-        if not token in terms:
-            return results
-        else:
-            if not i in terms[token]:
-                continue
-            else:
-                try_term = ' '.join(sorted(tokens[:i]))
-                if try_term in terms[token][i].keys():
-                    results += terms[token][i][try_term]
-    return results
-
 
 def extract_hpos(text, correct_spelling=True):
+
     """
     extracts hpo terms from text
     :param text: text
     :param correct_spelling:(True,False) attempt to correct spelling using spellcheck
     :return: list of phenotypes
     """
-    hpos = []
-    subsets = []
+
+    def group_sequence(lst):
+        res = [[lst[0]]]
+
+        for i in range(1, len(lst)):
+            if lst[i - 1] + 1 == lst[i]:
+                res[-1].append(lst[i])
+            else:
+                res.append([lst[i]])
+        return res
     if correct_spelling:
         text = spellcheck(text)
 
     tokens = nlp(text)
-    tokens = [st.stem(x.lemma_.lower()) for x in tokens if not x.is_stop and not x.is_punct]
 
-    for i, word in enumerate(tokens):
+    stemmed_tokens = [st.stem(x.lemma_.lower()) for x in tokens]
+
+    phenotokens = []
+    phenindeces = []
+
+    for i, token in enumerate(stemmed_tokens):
+        if token in terms:
+            phenotokens.append(token)
+            phenindeces.append(i)
+
+    extracted_terms = []
+
+    if not phenindeces:
+        return extracted_terms
+
+    groups = group_sequence(phenindeces)
+    phen_groups = []
+    # Assemble adjacent groups of phenotypes into groups of various sizes
+    # TODO (Fixme) find a more elegant way to do this
+    for i in range(len(groups)):
+        phen_groups.append(groups[i])
         try:
-            subset = tokens[i:max_search + i]
-        except IndexError:
-            subset = tokens[i:]
+            phen_groups.append(groups[i] + groups[i + 1])
+        except:
+            pass
+        try:
+            phen_groups.append(groups[i] + groups[i + 1] + groups[i + 2])
+        except:
+            pass
+        try:
+            phen_groups.append(groups[i] + groups[i + 1] + groups[i + 2] + groups[i + 3])
+        except:
+            pass
 
-        hpos += search_hp(subset)
+    for phen_group in phen_groups:
+        # if there is only one phenotype in a group
+        if len(phen_group) == 1:
+            grp_phen_tokens = stemmed_tokens[phen_group[0]]
 
-        subsets.append(subset)
+        # if multiple phenotypes, get all words between
+        else:
+            grp_phen_tokens = " ".join(stemmed_tokens[min(phen_group):max(phen_group)+1])
 
-    return hpos
+        # remove stop words and punctuation from group of phenotypes
+        grp_phen_tokens = nlp(grp_phen_tokens)
+        grp_phen_tokens = [str(x) for x in grp_phen_tokens if not x.is_stop and not x.is_punct]
+
+        # sort to match same order as used in making keys for search tree
+        try_term_key = ' '.join(sorted(grp_phen_tokens))
+
+        # attempt to extract hpo terms from tree based on root, length of phrase and key
+        try:
+            hpids = terms[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
+
+        except:
+            hpids = []
+
+        # if found any hpids, append to extracted
+        if hpids:
+            if len(phen_group) == 1:
+                matched_string = tokens[phen_group[0]]
+            else:
+                matched_string = tokens[min(phen_group):max(phen_group)+1]
+            extracted_terms.append(dict(hpid=hpids, index=phen_group, matched=matched_string))
+
+    return extracted_terms
 
 
 def self_evaluation():
@@ -98,7 +144,12 @@ def self_evaluation():
     for node in hpo:
         total += 1
         term = hpo.nodes[node]['name']
-        hpids = extract_hpos(term, correct_spelling=False)
+        hpids = []
+        extracted = extract_hpos(term, correct_spelling=False)
+
+        for item in extracted:
+            hpids += item['hpid']
+
         if str(node) in hpids:
             correct += 1
         else:
