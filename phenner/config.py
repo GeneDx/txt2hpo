@@ -19,6 +19,8 @@ ch.setFormatter(formatter)
 # add the handler to the logger
 logger.addHandler(ch)
 
+# log project and version
+logger.info(f'{__project__} {__version__}')
 
 
 # create config directory if it doesn't exist
@@ -72,5 +74,3 @@ else:
     config.read(config_file)
     logger.info(f'Using configuration file: {config_file}')
 
-# log project and version
-logger.info(f'{__project__} {__version__}')

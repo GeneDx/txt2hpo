@@ -1,20 +1,18 @@
-
+from phenner.config import logger
 
 from nltk.stem import RegexpStemmer
-import re
 import spacy
 import os
 import sys
+
 from phenopy import config as phenopy_config
-from phenner.config import logger
 from phenopy.obo import restore
 
 
 network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
 hpo = restore(network_file)
 
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$', min=6)
-
+st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=6)
 
 try:
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
@@ -55,13 +53,22 @@ def build_search_tree():
 
     for node in hpo:
         term = hpo.nodes[node]['name']
-        if 'synonym' in hpo.nodes[node]:
-            synonyms = hpo.nodes[node]['synonym']
+        if 'synonyms' in hpo.nodes[node]:
+            synonyms = hpo.nodes[node]['synonyms']
+
         else:
-            synonyms = ""
-        synonyms = re.findall(r'"(.*?)"', ','.join(synonyms))
+            synonyms = []
+
         names = [term] + synonyms
+
+        # extend names using custom rules
+        extended_names = []
         for name in names:
+
+            extended_names.append(name)
+            extended_names.append(name.replace('Abnormality', 'Disorder'))
+
+        for name in extended_names:
             tokens = nlp(name)
             tokens = [st.stem(x.lemma_.lower()) for x in tokens if not x.is_stop and not x.is_punct]
             for token in tokens:

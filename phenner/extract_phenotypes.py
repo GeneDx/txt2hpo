@@ -32,8 +32,7 @@ nlp.vocab["during"].is_stop = False
 nlp.vocab["than"].is_stop = False
 nlp.vocab["take"].is_stop = False
 
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$', min=6)
-max_search = 30
+st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=6)
 
 try:
     with open(config.get('tree', 'parsing_tree'), 'rb') as fh:
