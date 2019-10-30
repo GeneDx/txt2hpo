@@ -46,6 +46,16 @@ except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
         pickle.dump(terms, fh)
 
 
+def group_sequence(lst):
+    res = [[lst[0]]]
+    for i in range(1, len(lst)):
+        if lst[i - 1] + 1 == lst[i]:
+            res[-1].append(lst[i])
+        else:
+            res.append([lst[i]])
+    return res
+
+
 def extract_hpos(text, correct_spelling=True, max_neighbors=5):
 
     """
@@ -56,15 +66,7 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
     :return: list of phenotypes
     """
 
-    def group_sequence(lst):
-        res = [[lst[0]]]
 
-        for i in range(1, len(lst)):
-            if lst[i - 1] + 1 == lst[i]:
-                res[-1].append(lst[i])
-            else:
-                res.append([lst[i]])
-        return res
     if correct_spelling:
         text = spellcheck(text)
 
@@ -75,6 +77,7 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
     phenotokens = []
     phenindeces = []
 
+    # index phenotype tokens by matching each stem against root of search tree
     for i, token in enumerate(stemmed_tokens):
         if token in terms:
             phenotokens.append(token)
@@ -95,11 +98,14 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
     for i in range(len(groups)):
         if groups[i] not in phen_groups:
             phen_groups.append(groups[i])
-        adjacent_groups = groups[i]
+
+        # make sure not to modify original groups object
+        adjacent_groups = groups[i].copy()
         for j in range(1, max_neighbors):
             if len(groups) > i+j:
                 adjacent_groups += groups[i+j]
-                phen_groups.append(adjacent_groups)
+                if adjacent_groups not in phen_groups:
+                    phen_groups.append(adjacent_groups)
 
     for phen_group in phen_groups:
         # if there is only one phenotype in a group

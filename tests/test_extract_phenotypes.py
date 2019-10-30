@@ -1,15 +1,13 @@
-import os
 import unittest
-import pandas as pd
-from phenner.extract_phenotypes import extract_hpos
+
+from phenner.extract_phenotypes import extract_hpos, group_sequence
 
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
-    @classmethod
-    def setUp(cls):
-        cls.parent_dir = os.path.dirname(os.path.realpath(__file__))
-        cls.test_file = os.path.join(cls.parent_dir, 'data/CR_comparison_summary.HPOids.txt')
-        cls.test_cases_df = pd.read_csv(cls.test_file, sep='tsv')
+
+    def test_group_sequence(self):
+        truth = [[0, 1], [3]]
+        self.assertEqual(group_sequence([0, 1, 3]), truth)
 
     def test_extract_hpos(self):
 
@@ -58,3 +56,13 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(extract_hpos('developmental and delay', max_neighbors=2), truth)
         truth = []
         self.assertEqual(extract_hpos('developmental and delay', max_neighbors=1), truth)
+
+        # Test extracting single phenotype followed by multiword phenotype
+        truth = [{'hpid': ['HP:0100710'], 'index': [3], 'matched': 'impulsive'},
+                 {'hpid': ['HP:0000750'], 'index': [0, 1], 'matched': 'speech delay'}]
+        self.assertEqual(extract_hpos("speech delay and impulsive"), truth)
+
+        # Test extracting multiword phenotype followed by single phenotype
+        truth = [{'hpid': ['HP:0100710'], 'index': [0], 'matched': 'impulsive'},
+                 {'hpid': ['HP:0000750'], 'index': [2, 3], 'matched': 'speech delay'}]
+        self.assertEqual(extract_hpos("impulsive and speech delay"), truth)
