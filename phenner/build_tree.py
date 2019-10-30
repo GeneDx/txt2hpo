@@ -70,7 +70,7 @@ def build_search_tree():
 
         for name in extended_names:
             tokens = nlp(name)
-            tokens = [st.stem(x.lemma_.lower()) for x in tokens if not x.is_stop and not x.is_punct]
+            tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens if not x.is_stop and not x.is_punct]
             for token in tokens:
                 if token not in terms:
                     terms[token] = {}

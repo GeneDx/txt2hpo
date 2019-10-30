@@ -71,7 +71,7 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
 
     tokens = nlp(text)
 
-    stemmed_tokens = [st.stem(x.lemma_.lower()) for x in tokens]
+    stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
 
     phenotokens = []
     phenindeces = []
