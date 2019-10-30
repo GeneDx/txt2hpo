@@ -1,7 +1,11 @@
 
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
+import spacy
 from phenner.config import config, logger
+
 import json
+
+nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
 try:
     with open(config.get('spellcheck', 'vocabulary'), 'r') as fh:
@@ -52,5 +56,18 @@ def edits2(word):
 
 def spellcheck(text):
     "correct spelling in a sentence"
-    return " ".join(correction(x.lower()) for x in text.split())
+    # clean up text from punctuation marks
+    corrected_text = []
+    for token in nlp(text):
 
+        if token.is_stop:
+            corrected_text.append(token.text_with_ws)
+
+        elif token.is_punct:
+            corrected_text.append(token.text_with_ws)
+
+        else:
+            corrected_text.append(correction(token.text))
+            corrected_text.append(token.whitespace_)
+
+    return "".join(corrected_text)

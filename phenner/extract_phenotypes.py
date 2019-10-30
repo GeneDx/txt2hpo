@@ -14,6 +14,7 @@ except OSError:
     download('en')
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
+
 # these are used in hpo as part of phenotype definition, should keep them
 nlp.vocab["first"].is_stop = False
 nlp.vocab["second"].is_stop = False
@@ -21,9 +22,15 @@ nlp.vocab["third"].is_stop = False
 nlp.vocab["fourth"].is_stop = False
 nlp.vocab["fifth"].is_stop = False
 
+nlp.vocab["side"].is_stop = False
+nlp.vocab["right"].is_stop = False
+nlp.vocab["left"].is_stop = False
 nlp.vocab["front"].is_stop = False
 nlp.vocab["more"].is_stop = False
 nlp.vocab["less"].is_stop = False
+nlp.vocab["during"].is_stop = False
+nlp.vocab["than"].is_stop = False
+nlp.vocab["take"].is_stop = False
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$', min=6)
 max_search = 30
@@ -39,13 +46,13 @@ except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
         pickle.dump(terms, fh)
 
 
-
-def extract_hpos(text, correct_spelling=True):
+def extract_hpos(text, correct_spelling=True, max_neighbors=5):
 
     """
     extracts hpo terms from text
     :param text: text
     :param correct_spelling:(True,False) attempt to correct spelling using spellcheck
+    :param max_neighbors:(int) max number of phenotypic groups to attempt to search for a matching phenotype
     :return: list of phenotypes
     """
 
@@ -80,23 +87,20 @@ def extract_hpos(text, correct_spelling=True):
 
     groups = group_sequence(phenindeces)
     phen_groups = []
-    # Assemble adjacent groups of phenotypes into groups of various sizes
-    # TODO (Fixme) find a more elegant way to do this
-    for i in range(len(groups)):
-        phen_groups.append(groups[i])
-        try:
-            phen_groups.append(groups[i] + groups[i + 1])
-        except:
-            pass
-        try:
-            phen_groups.append(groups[i] + groups[i + 1] + groups[i + 2])
-        except:
-            pass
-        try:
-            phen_groups.append(groups[i] + groups[i + 1] + groups[i + 2] + groups[i + 3])
-        except:
-            pass
 
+    # Add individual word token indices to phenotype groups
+    phen_groups += [[x] for x in phenindeces]
+
+    # Assemble adjacent groups of phenotypes into groups of various sizes
+    for i in range(len(groups)):
+        if groups[i] not in phen_groups:
+            phen_groups.append(groups[i])
+        adjacent_groups = groups[i]
+        for j in range(1, max_neighbors):
+            if len(groups) > i+j:
+                adjacent_groups += groups[i+j]
+                phen_groups.append(adjacent_groups)
+    print(phen_groups)
     for phen_group in phen_groups:
         # if there is only one phenotype in a group
         if len(phen_group) == 1:
@@ -126,12 +130,12 @@ def extract_hpos(text, correct_spelling=True):
                 matched_string = tokens[phen_group[0]]
             else:
                 matched_string = tokens[min(phen_group):max(phen_group)+1]
-            extracted_terms.append(dict(hpid=hpids, index=phen_group, matched=matched_string))
+            extracted_terms.append(dict(hpid=hpids, index=phen_group, matched=str(matched_string)))
 
     return extracted_terms
 
 
-def self_evaluation():
+def self_evaluation(correct_spelling=False):
     total = 0
     correct = 0
     wrong = []
@@ -145,7 +149,7 @@ def self_evaluation():
         total += 1
         term = hpo.nodes[node]['name']
         hpids = []
-        extracted = extract_hpos(term, correct_spelling=False)
+        extracted = extract_hpos(term, correct_spelling=correct_spelling)
 
         for item in extracted:
             hpids += item['hpid']

@@ -29,9 +29,17 @@ nlp.vocab["second"].is_stop = False
 nlp.vocab["third"].is_stop = False
 nlp.vocab["fourth"].is_stop = False
 nlp.vocab["fifth"].is_stop = False
+
+nlp.vocab["side"].is_stop = False
+nlp.vocab["right"].is_stop = False
+nlp.vocab["left"].is_stop = False
 nlp.vocab["front"].is_stop = False
 nlp.vocab["more"].is_stop = False
 nlp.vocab["less"].is_stop = False
+nlp.vocab["during"].is_stop = False
+nlp.vocab["than"].is_stop = False
+nlp.vocab["take"].is_stop = False
+
 
 def build_search_tree():
     """
