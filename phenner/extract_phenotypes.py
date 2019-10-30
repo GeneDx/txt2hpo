@@ -100,7 +100,7 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
             if len(groups) > i+j:
                 adjacent_groups += groups[i+j]
                 phen_groups.append(adjacent_groups)
-    print(phen_groups)
+
     for phen_group in phen_groups:
         # if there is only one phenotype in a group
         if len(phen_group) == 1:
