@@ -13,7 +13,7 @@ from phenopy.obo import restore
 network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
 hpo = restore(network_file)
 
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=6)
+st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
 
 try:
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
@@ -24,7 +24,7 @@ except OSError:
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
 remove_from_stops = "first second third fourth fifth under over front back behind ca below without no not "
-remove_from_stops += "out up side right left more less during than take"
+remove_from_stops += "out up side right left more less during than take move"
 for not_a_stop in remove_from_stops.split(" "):
     nlp.vocab[not_a_stop].is_stop = False
     nlp.vocab[not_a_stop.capitalize()].is_stop = False
