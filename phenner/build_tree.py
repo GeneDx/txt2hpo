@@ -9,6 +9,7 @@ from phenopy import config as phenopy_config
 from phenopy.obo import restore
 
 
+
 network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
 hpo = restore(network_file)
 
@@ -22,21 +23,11 @@ except OSError:
     download('en')
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
-nlp.vocab["first"].is_stop = False
-nlp.vocab["second"].is_stop = False
-nlp.vocab["third"].is_stop = False
-nlp.vocab["fourth"].is_stop = False
-nlp.vocab["fifth"].is_stop = False
-
-nlp.vocab["side"].is_stop = False
-nlp.vocab["right"].is_stop = False
-nlp.vocab["left"].is_stop = False
-nlp.vocab["front"].is_stop = False
-nlp.vocab["more"].is_stop = False
-nlp.vocab["less"].is_stop = False
-nlp.vocab["during"].is_stop = False
-nlp.vocab["than"].is_stop = False
-nlp.vocab["take"].is_stop = False
+remove_from_stops = "first second third fourth fifth under over front back behind ca below without no not "
+remove_from_stops += "side right left more less during than take"
+for not_a_stop in remove_from_stops.split(" "):
+    nlp.vocab[not_a_stop].is_stop = False
+    nlp.vocab[not_a_stop.capitalize()].is_stop = False
 
 
 def build_search_tree():
@@ -69,6 +60,7 @@ def build_search_tree():
             extended_names.append(name.replace('Abnormality', 'Disorder'))
 
         for name in extended_names:
+
             tokens = nlp(name)
             tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens if not x.is_stop and not x.is_punct]
             for token in tokens:
@@ -86,6 +78,7 @@ def build_search_tree():
         progress = i/n_nodes
         update_progress(progress)
     logger.info('Done \n')
+
     return terms
 
 
