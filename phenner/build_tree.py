@@ -24,7 +24,7 @@ except OSError:
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
 remove_from_stops = "first second third fourth fifth under over front back behind ca below without no not "
-remove_from_stops += "out side right left more less during than take"
+remove_from_stops += "out up side right left more less during than take"
 for not_a_stop in remove_from_stops.split(" "):
     nlp.vocab[not_a_stop].is_stop = False
     nlp.vocab[not_a_stop.capitalize()].is_stop = False

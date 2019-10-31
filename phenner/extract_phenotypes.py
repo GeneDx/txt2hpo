@@ -17,7 +17,7 @@ except OSError:
 
 # these are used in hpo as part of phenotype definition, should keep them
 remove_from_stops = "first second third fourth fifth under over front back behind ca below without no not "
-remove_from_stops += "side right left more less during than take"
+remove_from_stops += "out up side right left more less during than take"
 for not_a_stop in remove_from_stops.split(" "):
     nlp.vocab[not_a_stop].is_stop = False
     nlp.vocab[not_a_stop.capitalize()].is_stop = False
