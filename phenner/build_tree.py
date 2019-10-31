@@ -1,34 +1,15 @@
-from phenner.config import logger
-
-from nltk.stem import RegexpStemmer
-import spacy
+import configparser
 import os
+import pickle
 import sys
-
+from phenner.config import logger, config
+from phenner.nlp import nlp
+from phenner.nlp import st
 from phenopy import config as phenopy_config
 from phenopy.obo import restore
 
-
-
 network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
 hpo = restore(network_file)
-
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
-
-try:
-    nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
-except OSError:
-    logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
-    from spacy.cli import download
-    download('en')
-    nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
-
-remove_from_stops = "first second third fourth fifth under over front back behind ca below without no not "
-remove_from_stops += "out up side right left more less during than take move"
-for not_a_stop in remove_from_stops.split(" "):
-    nlp.vocab[not_a_stop].is_stop = False
-    nlp.vocab[not_a_stop.capitalize()].is_stop = False
-
 
 def build_search_tree():
     """
@@ -102,3 +83,12 @@ def update_progress(progress):
     sys.stdout.write(text)
     sys.stdout.flush()
 
+try:
+    with open(config.get('tree', 'parsing_tree'), 'rb') as fh:
+        search_tree = pickle.load(fh)
+
+except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
+    logger.info(f'Parsed search tree not found\n {e}')
+    search_tree = build_search_tree()
+    with open(config.get('tree', 'parsing_tree'), 'wb') as fh:
+        pickle.dump(search_tree, fh)

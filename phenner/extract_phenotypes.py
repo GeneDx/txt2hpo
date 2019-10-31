@@ -1,48 +1,26 @@
-import spacy
-import pickle
-import configparser
-from phenner.build_tree import build_search_tree, update_progress, hpo
-from nltk.stem import RegexpStemmer
-from phenner.config import logger, config
+
+from phenner.build_tree import update_progress, hpo
+from phenner.config import logger
 from phenner.spellcheck import spellcheck
-
-try:
-    nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
-except OSError:
-    logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
-    from spacy.cli import download
-    download('en')
-    nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
-
-
-# these are used in hpo as part of phenotype definition, should keep them
-remove_from_stops = "first second third fourth fifth under over front back behind ca below without no not "
-remove_from_stops += "out up side right left more less during than take move"
-for not_a_stop in remove_from_stops.split(" "):
-    nlp.vocab[not_a_stop].is_stop = False
-    nlp.vocab[not_a_stop.capitalize()].is_stop = False
-
-st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
-
-try:
-    with open(config.get('tree', 'parsing_tree'), 'rb') as fh:
-        terms = pickle.load(fh)
-
-except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
-    logger.info(f'Parsed search tree not found\n {e}')
-    terms = build_search_tree()
-    with open(config.get('tree', 'parsing_tree'), 'wb') as fh:
-        pickle.dump(terms, fh)
+from phenner.nlp import nlp
+from phenner.nlp import st
+from phenner.build_tree import search_tree
 
 
 def group_sequence(lst):
-    res = [[lst[0]]]
+    """
+    Break a sequence of integers into continuous groups
+    [1,2,3,5,7,8] -> [[1,2,3],[5],[7,8]]
+    :param lst: list of ints
+    :return: list of lists
+    """
+    grouped = [[lst[0]]]
     for i in range(1, len(lst)):
         if lst[i - 1] + 1 == lst[i]:
-            res[-1].append(lst[i])
+            grouped[-1].append(lst[i])
         else:
-            res.append([lst[i]])
-    return res
+            grouped.append([lst[i]])
+    return grouped
 
 
 def extract_hpos(text, correct_spelling=True, max_neighbors=5):
@@ -54,7 +32,6 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
     :param max_neighbors:(int) max number of phenotypic groups to attempt to search for a matching phenotype
     :return: list of phenotypes
     """
-
 
     if correct_spelling:
         text = spellcheck(text)
@@ -68,7 +45,7 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
 
     # index phenotype tokens by matching each stem against root of search tree
     for i, token in enumerate(stemmed_tokens):
-        if token in terms:
+        if token in search_tree:
             phenotokens.append(token)
             phenindeces.append(i)
 
@@ -107,14 +84,14 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
 
         # remove stop words and punctuation from group of phenotypes
         grp_phen_tokens = nlp(grp_phen_tokens)
-        grp_phen_tokens = [str(x) for x in grp_phen_tokens if not x.is_stop and not x.is_punct]
+        grp_phen_tokens = [x.text for x in grp_phen_tokens if not x.is_stop and not x.is_punct]
 
         # sort to match same order as used in making keys for search tree
         try_term_key = ' '.join(sorted(grp_phen_tokens))
 
         # attempt to extract hpo terms from tree based on root, length of phrase and key
         try:
-            hpids = terms[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
+            hpids = search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
 
         except:
             hpids = []
@@ -125,7 +102,7 @@ def extract_hpos(text, correct_spelling=True, max_neighbors=5):
                 matched_string = tokens[phen_group[0]]
             else:
                 matched_string = tokens[min(phen_group):max(phen_group)+1]
-            extracted_terms.append(dict(hpid=hpids, index=phen_group, matched=str(matched_string)))
+            extracted_terms.append(dict(hpid=hpids, index=phen_group, matched=matched_string.text))
 
     return extracted_terms
 
