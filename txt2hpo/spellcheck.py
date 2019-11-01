@@ -1,7 +1,7 @@
 
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
 import spacy
-from phenner.config import config, logger
+from txt2hpo.config import config, logger
 
 import json
 
@@ -13,7 +13,7 @@ try:
 
 except (FileNotFoundError,KeyError):
     logger.critical('Could not locate Spellcheck dictionary')
-
+    exit(1)
 
 def P(word, N=sum(WORDS.values())):
     "Probability of `word`."

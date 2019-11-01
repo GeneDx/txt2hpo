@@ -1,10 +1,10 @@
 
-from phenner.build_tree import update_progress, hpo
-from phenner.config import logger
-from phenner.spellcheck import spellcheck
-from phenner.nlp import nlp
-from phenner.nlp import st
-from phenner.build_tree import search_tree
+from txt2hpo.build_tree import update_progress, hpo_network
+from txt2hpo.config import logger
+from txt2hpo.spellcheck import spellcheck
+from txt2hpo.nlp import nlp
+from txt2hpo.nlp import st
+from txt2hpo.build_tree import search_tree
 
 
 def group_sequence(lst):
@@ -23,7 +23,7 @@ def group_sequence(lst):
     return grouped
 
 
-def extract_hpos(text, correct_spelling=True, max_neighbors=5):
+def hpo(text, correct_spelling=True, max_neighbors=5):
 
     """
     extracts hpo terms from text
@@ -121,7 +121,7 @@ def self_evaluation(correct_spelling=False):
         total += 1
         term = hpo.nodes[node]['name']
         hpids = []
-        extracted = extract_hpos(term, correct_spelling=correct_spelling)
+        extracted = hpo(term, correct_spelling=correct_spelling)
 
         for item in extracted:
             hpids += item['hpid']

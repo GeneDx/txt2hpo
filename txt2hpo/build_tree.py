@@ -1,15 +1,20 @@
 import configparser
-import os
 import pickle
 import sys
-from phenner.config import logger, config
-from phenner.nlp import nlp
-from phenner.nlp import st
-from phenopy import config as phenopy_config
-from phenopy.obo import restore
+from txt2hpo.config import logger, config
+from txt2hpo.nlp import nlp
+from txt2hpo.nlp import st
+from phenopy.network import _load_hpo_network
+from phenopy.config import config as phenopy_config
+from phenopy.p2g import load as load_p2g
 
-network_file = os.path.join(phenopy_config.data_directory, 'hpo_network.pickle')
-hpo = restore(network_file)
+pheno2genes_file = phenopy_config.get('hpo', 'pheno2genes_file')
+obo_file = phenopy_config.get('hpo', 'obo_file')
+# load phenotypes to diseases associations
+terms_to_genes, genes_to_terms, annotations_count = load_p2g(pheno2genes_file, logger=logger)
+
+# load hpo network
+hpo_network = _load_hpo_network(obo_file, terms_to_genes, annotations_count, None)
 
 def build_search_tree():
     """
@@ -21,12 +26,12 @@ def build_search_tree():
     print("")
     logger.info('Building a stemmed parse tree, this may take a few seconds, dont worry this is a one time thing \n')
     i = 0
-    n_nodes = len(hpo.nodes)
+    n_nodes = len(hpo_network.nodes)
 
-    for node in hpo:
-        term = hpo.nodes[node]['name']
-        if 'synonyms' in hpo.nodes[node]:
-            synonyms = hpo.nodes[node]['synonyms']
+    for node in hpo_network:
+        term = hpo_network.nodes[node]['name']
+        if 'synonyms' in hpo_network.nodes[node]:
+            synonyms = hpo_network.nodes[node]['synonyms']
 
         else:
             synonyms = []

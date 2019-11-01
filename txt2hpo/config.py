@@ -1,8 +1,7 @@
-import logging
-
 import configparser
-from phenner import __project__, __version__
+import logging
 import os
+from txt2hpo import __project__, __version__
 
 # create logger
 logger = logging.getLogger(__project__)
@@ -42,7 +41,7 @@ except FileExistsError:
 # create config
 config = configparser.ConfigParser()
 
-if not os.path.isfile(os.path.join(config_directory, 'phenner.ini')):
+if not os.path.isfile(os.path.join(config_directory, 'txt2hpo.ini')):
     # create config
     config = configparser.ConfigParser()
 
@@ -60,7 +59,7 @@ if not os.path.isfile(os.path.join(config_directory, 'phenner.ini')):
         ),
 
     }
-    with open(os.path.join(config_directory, 'phenner.ini'), 'w') as configfile:
+    with open(os.path.join(config_directory, 'txt2hpo.ini'), 'w') as configfile:
         logger.info('writing config file to: %s '%config_directory)
         config.write(configfile)
 

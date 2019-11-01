@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-from phenner import __project__, __version__
+from txt2hpo import __project__, __version__
 
 from os import path
 this_directory = path.abspath(path.dirname(__file__))

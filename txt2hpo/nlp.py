@@ -1,5 +1,5 @@
 import spacy
-from phenner.config import logger
+from txt2hpo.config import logger
 from nltk.stem import RegexpStemmer
 
 
