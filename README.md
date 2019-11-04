@@ -1,6 +1,6 @@
 # txt2hpo
-`txt2hpo` is a Python package for extracting phenotypes and encoding them as HPO ids, [Human Phenotype Ontology (HPO)](https://hpo.jax.org/app/).
-`txt2hpo` understands inflection, extracts phenotypes consisting of multiple words arbitrary word order. 
+`txt2hpo` is a Python package for extracting HPO-encoded phenotypes from text, [Human Phenotype Ontology (HPO)](https://hpo.jax.org/app/).
+`txt2hpo` is accounts for inflection, is able to parse complex multi-word phenotypes and comes with a built-in medical spellchecker. 
 
 # Installation
 
@@ -17,11 +17,9 @@ python setup.py install
 
 ```python 
 from txt2hpo.extract import hpo
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
 
 hpos = hpo("patient with developmental delay and hypotonia")
-pp.pprint(hpos)
+print(hpos)
 
 
 [   {'hpid': ['HP:0001290'], 'index': [5], 'matched': 'hypotonia'},
@@ -30,8 +28,8 @@ pp.pprint(hpos)
     
 ```
 
-By default `txt2hpo` will check spelling using a spellchecker trained on medical literature.
-This feature can be turned off using the `correct_spelling` flag. Turning off spellchecker speeds up extraction.
+By default `txt2hpo` will attempt to correct spelling, at the cost of slower processing speed.
+This feature can be turned off using the `correct_spelling` flag. 
 
 ```python 
 from txt2hpo.extract import hpo
