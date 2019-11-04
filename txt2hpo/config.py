@@ -24,8 +24,7 @@ logger.info(f'{__project__} {__version__}')
 
 # create config directory if it doesn't exist
 config_directory = os.path.join(os.environ.get('HOME'), f'.{__project__}')
-project_directory = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
-project_data_dir = os.path.join(project_directory, 'data')
+
 try:
     os.makedirs(config_directory)
 except FileExistsError:
@@ -52,13 +51,7 @@ if not os.path.isfile(os.path.join(config_directory, 'txt2hpo.ini')):
         ),
 
     }
-    config['spellcheck'] = {
-        'vocabulary': os.path.join(
-            project_data_dir,
-            'spellcheck_vocab.json',
-        ),
 
-    }
     with open(os.path.join(config_directory, 'txt2hpo.ini'), 'w') as configfile:
         logger.info('writing config file to: %s '%config_directory)
         config.write(configfile)

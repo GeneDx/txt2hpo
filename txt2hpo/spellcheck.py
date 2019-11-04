@@ -1,24 +1,16 @@
 
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
 import spacy
-from txt2hpo.config import config, logger
 
-import json
+from txt2hpo.data.data import spellcheck_data
+
 
 nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
-try:
-    with open(config.get('spellcheck', 'vocabulary'), 'r') as fh:
-        WORDS = json.load(fh)
-
-except (FileNotFoundError,KeyError):
-    logger.critical('Could not locate Spellcheck dictionary')
-    exit(1)
-
-def P(word, N=sum(WORDS.values())):
+def P(word, N=sum(spellcheck_data.values())):
     "Probability of `word`."
-    if word in WORDS:
-        return WORDS[word] / N
+    if word in spellcheck_data:
+        return spellcheck_data[word] / N
     else:
         return 0.1/N
 
@@ -34,8 +26,8 @@ def candidates(word):
 
 
 def known(words):
-    "The subset of `words` that appear in the dictionary of WORDS."
-    return set(w for w in words if w in WORDS)
+    "The subset of `words` that appear in the dictionary of spellcheck_data."
+    return set(w for w in words if w in spellcheck_data)
 
 
 def edits1(word):
