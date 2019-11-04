@@ -2,15 +2,15 @@
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
 import spacy
 
-from txt2hpo.data.data import spellcheck_data
+from txt2hpo.data.spellcheck_vocab import spellcheck_vocab
 
 
 nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
-def P(word, N=sum(spellcheck_data.values())):
+def P(word, N=sum(spellcheck_vocab.values())):
     "Probability of `word`."
-    if word in spellcheck_data:
-        return spellcheck_data[word] / N
+    if word in spellcheck_vocab:
+        return spellcheck_vocab[word] / N
     else:
         return 0.1/N
 
@@ -27,7 +27,7 @@ def candidates(word):
 
 def known(words):
     "The subset of `words` that appear in the dictionary of spellcheck_data."
-    return set(w for w in words if w in spellcheck_data)
+    return set(w for w in words if w in spellcheck_vocab)
 
 
 def edits1(word):
