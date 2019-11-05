@@ -22,8 +22,8 @@ hpos = hpo("patient with developmental delay and hypotonia")
 print(hpos)
 
 
-[   {'hpid': ['HP:0001290'], 'index': [5], 'matched': 'hypotonia'},
-    {'hpid': ['HP:0001263'], 'index': [2, 3], 'matched': 'developmental delay'}]
+[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
+ {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
     
     
 ```
@@ -40,8 +40,8 @@ hpos = hpo("patient with devlopental delay and hyptonia", correct_spelling=True)
 pp.pprint(hpos)
 
 
-[   {'hpid': ['HP:0001290'], 'index': [5], 'matched': 'hypotonia'},
-    {'hpid': ['HP:0001263'], 'index': [2, 3], 'matched': 'developmental delay'}]
+[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
+ {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
     
 ```
 
