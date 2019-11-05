@@ -1,4 +1,5 @@
 
+import json
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
@@ -100,11 +101,18 @@ def hpo(text, correct_spelling=True, max_neighbors=5):
         if hpids:
             if len(phen_group) == 1:
                 matched_string = tokens[phen_group[0]]
+                start = tokens[phen_group[0]].idx
+                end = start + len(tokens[phen_group[0]])
             else:
                 matched_string = tokens[min(phen_group):max(phen_group)+1]
-            extracted_terms.append(dict(hpid=hpids, index=phen_group, matched=matched_string.text))
+                start = tokens[phen_group[0]:phen_group[-1]+1].start_char
+                end = tokens[phen_group[0]:phen_group[-1]+1].end_char
 
-    return extracted_terms
+            extracted_terms.append({"hpid":hpids, "index":[start, end], "matched":matched_string.text})
+    if extracted_terms:
+        return json.dumps(extracted_terms)
+    else:
+        return []
 
 
 def self_evaluation(correct_spelling=False):
@@ -115,25 +123,34 @@ def self_evaluation(correct_spelling=False):
     print("")
     logger.info('Running self evaluation, this may take a few minutes \n')
     i = 0
-    n_nodes = len(hpo.nodes)
+    n_nodes = len(hpo_network.nodes)
 
-    for node in hpo:
+    for node in hpo_network:
         total += 1
-        term = hpo.nodes[node]['name']
+        term = hpo_network.nodes[node]['name']
         hpids = []
         extracted = hpo(term, correct_spelling=correct_spelling)
+        if extracted:
+            extracted = json.loads(extracted)
 
-        for item in extracted:
-            hpids += item['hpid']
+            for item in extracted:
+                hpids += item['hpid']
 
-        if str(node) in hpids:
-            correct += 1
+            if str(node) in hpids:
+                correct += 1
+            else:
+                wrong.append(dict(
+                    actual=node,
+                    actual_name=term,
+                    extracted=hpids,
+                    extracted_name=[hpo_network.nodes[x]['name'] for x in hpids],
+                ))
         else:
             wrong.append(dict(
                 actual=node,
                 actual_name=term,
-                extracted=hpids,
-                extracted_name=[hpo.nodes[x]['name'] for x in hpids],
+                extracted=[],
+                extracted_name=[],
             ))
 
         i += 1
