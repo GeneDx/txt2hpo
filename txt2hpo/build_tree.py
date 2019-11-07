@@ -4,17 +4,21 @@ import sys
 from txt2hpo.config import logger, config
 from txt2hpo.nlp import nlp
 from txt2hpo.nlp import st
-from phenopy.network import _load_hpo_network
 from phenopy.config import config as phenopy_config
-from phenopy.p2g import load as load_p2g
 
-pheno2genes_file = phenopy_config.get('hpo', 'pheno2genes_file')
+from phenopy import generate_annotated_hpo_network
+
+
 obo_file = phenopy_config.get('hpo', 'obo_file')
-# load phenotypes to diseases associations
-terms_to_genes, genes_to_terms, annotations_count = load_p2g(pheno2genes_file, logger=logger)
 
-# load hpo network
-hpo_network = _load_hpo_network(obo_file, terms_to_genes, annotations_count, None)
+disease_to_phenotype_file = phenopy_config.get('hpo', 'disease_to_phenotype_file')
+
+hpo_network, alt2prim, disease_records = \
+    generate_annotated_hpo_network(obo_file,
+                                   disease_to_phenotype_file,
+                                   annotations_file=None,
+                                   ages_distribution_file=None
+                                   )
 
 def build_search_tree():
     """
