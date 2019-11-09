@@ -21,7 +21,6 @@ from txt2hpo.extract import hpo
 hpos = hpo("patient with developmental delay and hypotonia")
 print(hpos)
 
-
 [{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
  {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
     
@@ -33,12 +32,8 @@ This feature can be turned off by setting the `correct_spelling` flag to `False`
 
 ```python 
 from txt2hpo.extract import hpo
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
 
 hpos = hpo("patient with devlopental delay and hyptonia", correct_spelling=True)
-pp.pprint(hpos)
-
 
 [{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
  {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
