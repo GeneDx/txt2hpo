@@ -67,3 +67,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         truth = json.dumps([{"hpid": ["HP:0100710"], "index": [0, 9], "matched": "impulsive"},
                  {"hpid": ["HP:0000750"], "index": [14, 26], "matched": "speech delay"}])
         self.assertEqual(hpo("impulsive and speech delay"), truth)
+
+        # Test term indexing given max length of extracted text
+
+        truth = json.dumps([
+                {"hpid": ["HP:0001263"], "index": [0, 19], "matched": "developmental delay"},
+                {"hpid": ["HP:0001290"], "index": [21, 30], "matched": "hypotonia"}
+                            ])
+        self.assertEqual(hpo("developmental delay, hypotonia", max_length=20), truth)
