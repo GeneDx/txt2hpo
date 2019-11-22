@@ -31,4 +31,4 @@ jobs:
     - name: Test with unittest
       run: |
         pip install pytest
-        pipenv run pytest --cov=txt2hpo --cov-report=xml
+        pipenv run pytest
