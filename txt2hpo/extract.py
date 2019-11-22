@@ -77,7 +77,7 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
         try:
             hpids = search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
 
-        except KeyError:
+        except (KeyError, IndexError):
             hpids = []
 
         # if found any hpids, append to extracted
