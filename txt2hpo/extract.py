@@ -15,6 +15,8 @@ def group_sequence(lst):
     :param lst: list of ints
     :return: list of lists
     """
+    if not lst:
+        return []
     grouped = [[lst[0]]]
     for i in range(1, len(lst)):
         if lst[i - 1] + 1 == lst[i]:
@@ -23,45 +25,21 @@ def group_sequence(lst):
             grouped.append([lst[i]])
     return grouped
 
-
-def hpo(text, correct_spelling=True, max_neighbors=5):
-
-    """
-    extracts hpo terms from text
-    :param text: text
-    :param correct_spelling:(True,False) attempt to correct spelling using spellcheck
-    :param max_neighbors:(int) max number of phenotypic groups to attempt to search for a matching phenotype
-    :return: list of phenotypes
-    """
-
-    if correct_spelling:
-        text = spellcheck(text)
-
-    tokens = nlp(text)
-
-    stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
-
+def index_tokens(stemmed_tokens):
+    """index phenotype tokens by matching each stem against root of search tree"""
     phenotokens = []
     phenindeces = []
 
-    # index phenotype tokens by matching each stem against root of search tree
     for i, token in enumerate(stemmed_tokens):
         if token in search_tree:
             phenotokens.append(token)
             phenindeces.append(i)
 
-    extracted_terms = []
+    return phenotokens, phenindeces
 
-    if not phenindeces:
-        return extracted_terms
 
-    groups = group_sequence(phenindeces)
-    phen_groups = []
-
-    # Add individual word token indices to phenotype groups
-    phen_groups += [[x] for x in phenindeces]
-
-    # Assemble adjacent groups of phenotypes into groups of various sizes
+def assemble_groups(groups, phen_groups, max_neighbors):
+    """Assemble adjacent groups of phenotypes into groups of various sizes"""
     for i in range(len(groups)):
         if groups[i] not in phen_groups:
             phen_groups.append(groups[i])
@@ -69,11 +47,16 @@ def hpo(text, correct_spelling=True, max_neighbors=5):
         # make sure not to modify original groups object
         adjacent_groups = groups[i].copy()
         for j in range(1, max_neighbors):
-            if len(groups) > i+j:
-                adjacent_groups += groups[i+j]
+            if len(groups) > i + j:
+                adjacent_groups += groups[i + j]
                 if adjacent_groups not in phen_groups:
                     phen_groups.append(adjacent_groups)
+    return phen_groups
 
+
+def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
+    """Match hpo terms from stemmed tree to indexed groups in text"""
+    extracted_terms = []
     for phen_group in phen_groups:
         # if there is only one phenotype in a group
         if len(phen_group) == 1:
@@ -94,7 +77,7 @@ def hpo(text, correct_spelling=True, max_neighbors=5):
         try:
             hpids = search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
 
-        except:
+        except KeyError:
             hpids = []
 
         # if found any hpids, append to extracted
@@ -108,7 +91,54 @@ def hpo(text, correct_spelling=True, max_neighbors=5):
                 start = tokens[phen_group[0]:phen_group[-1]+1].start_char
                 end = tokens[phen_group[0]:phen_group[-1]+1].end_char
 
-            extracted_terms.append({"hpid":hpids, "index":[start, end], "matched":matched_string.text})
+            extracted_terms.append({"hpid":hpids, "index":[base_index + start, base_index + end], "matched":matched_string.text})
+    return extracted_terms
+
+
+def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
+    """
+    extracts hpo terms from text
+    :param text: text of type string
+    :param correct_spelling: (True,False) attempt to correct spelling using spellcheck
+    :param max_neighbors: (int) max number of phenotypic groups to attempt to search for a matching phenotype
+    :param max_length: (int) max document length in characters, higher limit will require more memory
+    :return: json of hpo terms, their indices in text and matched string
+    """
+
+    nlp.max_length = max_length
+
+    extracted_terms = []
+
+    chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
+    len_last_chunk = 1
+    for i, chunk in enumerate(chunks):
+        if correct_spelling:
+            chunk = spellcheck(chunk)
+            if len(chunk) < max_length:
+                nlp.max_length = len(chunk)
+
+        tokens = nlp(chunk)
+
+        # Stem tokens
+        stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
+
+        # Index tokens which match stemmed phenotypes
+        phenotokens, phenindeces = index_tokens(stemmed_tokens)
+
+        # Group token indices
+        groups = group_sequence(phenindeces)
+        phen_groups = []
+
+        # Add individual word token indices to phenotype groups
+        phen_groups += [[x] for x in phenindeces]
+
+        # Find and fuse adjacent phenotype groups
+        phen_groups = assemble_groups(groups, phen_groups, max_neighbors)
+
+        # Extract hpo terms
+        extracted_terms += find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index=i * len_last_chunk)
+        len_last_chunk = len(chunk)
+
     if extracted_terms:
         return json.dumps(extracted_terms)
     else:
