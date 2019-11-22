@@ -12,7 +12,7 @@ pytest-cov = "*"
 nltk = "*"
 spacy = "*"
 phenopy = "*"
-networkx = "==2.3"
+networkx = "*"
 
 [requires]
 python_version = "3.7"
