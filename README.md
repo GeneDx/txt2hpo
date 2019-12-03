@@ -1,6 +1,6 @@
 # txt2hpo
 `txt2hpo` is a Python library for extracting HPO-encoded phenotypes from text.
-`txt2hpo` recognizes differences in inflection (e.g. hypotonic vs. hypotonia), is able to parse complex multi-word phenotypes with differing word order (e.g. developmentally delayed vs. developmental delay) and comes with a built-in medical spellchecker. 
+`txt2hpo` recognizes differences in inflection (e.g. hypotonic vs. hypotonia), is able to parse complex multi-word phenotypes with differing word order (e.g. developmentally delayed vs. delayed development) and comes with a built-in medical spellchecker. 
 
 # Installation
 
