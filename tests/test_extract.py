@@ -1,7 +1,8 @@
 import unittest
 import json
 
-from txt2hpo.extract import hpo, group_sequence
+import tests.test_cases as tc
+from txt2hpo.extract import hpo, group_sequence, phenotype_distance
 
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
@@ -75,3 +76,39 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                 {"hpid": ["HP:0001290"], "index": [21, 30], "matched": "hypotonia"}
                             ])
         self.assertEqual(hpo("developmental delay, hypotonia", max_length=20), truth)
+
+
+    def test_phenotype_distance(self):
+        "[{'hpid': ['HP:0001290'], 'index': [895, 904], 'matched': 'hypotonia'}," \
+        "{'hpid': ['HP:0000218'], 'index': [3184, 3195], 'matched': 'high palate'}]"
+        truth = [('HP:0000218', 'HP:0001290', abs(3184 - 895) / 3184)]
+        result = phenotype_distance(tc.test_case0)
+        result = [x for x in result if x[0] != x[1]]
+        self.assertEqual(result, truth)
+
+        """[{"hpid": ["HP:0001290"], "index": [895, 904], "matched": "hypotonia"}, 
+         {"hpid": ["HP:0002014"], "index": [1597, 1605], "matched": "diarrhea"}, 
+         {"hpid": ["HP:0000218"], "index": [3184, 3195], "matched": "high palate"}]"""
+
+        truth = [('HP:0002014', 'HP:0001290', 0.22047738693467336),
+                ('HP:0000218', 'HP:0001290', 0.7189070351758794),
+                ('HP:0000218', 'HP:0002014', 0.498429648241206)]
+        result = phenotype_distance(tc.test_case1)
+        result = [x for x in result if x[0] != x[1]]
+        self.assertEqual(result, truth)
+
+        # Hypotonia is seen twice
+        """[{"hpid": ["HP:0001290"], "index": [895, 904], "matched": "hypotonia"},
+              {"hpid": ["HP:0001290"], "index": [1095, 1104], "matched": "hypotonia"},
+              {"hpid": ["HP:0002014"], "index": [1597, 1605], "matched": "diarrhea"}, 
+             {"hpid": ["HP:0000218"], "index": [3184, 3195], "matched": "high palate"}]"""
+
+        # Multiple unique entries for repeated term
+        truth = [('HP:0002014', 'HP:0001290', 0.22047738693467336),
+                ('HP:0000218', 'HP:0001290', 0.7189070351758794),
+                ('HP:0002014', 'HP:0001290', 0.15766331658291458),
+                ('HP:0000218', 'HP:0001290', 0.6560929648241206),
+                ('HP:0000218', 'HP:0002014', 0.498429648241206)]
+        result = phenotype_distance(tc.test_case2)
+        result = [x for x in result if x[0] != x[1]]
+        self.assertEqual(result, truth)
