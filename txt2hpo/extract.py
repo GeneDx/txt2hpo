@@ -1,6 +1,5 @@
 import json
 
-import numpy as np
 import pandas as pd
 
 from phenopy.util import half_product
@@ -151,9 +150,13 @@ def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
 
 
 def phenotype_distance(extracted_hpos):
-    """Given the return from hpo, find the normalized distance between all terms in the document.
-    This could serve as a proxy for cooccurrence.
     """
+    Given the return from hpo, find the normalized distance between all terms in the document.
+    This could serve as a proxy for cooccurrence.
+    :param extracted_hpos: json string output of txt2hpo
+    :return: list of tuples (hpo1, hpo2, distance)
+    """
+
     # load the extracted phenotypes into a pandas DataFrame
     hpo_ids = json.loads(extracted_hpos)
     df = pd.DataFrame(hpo_ids)
@@ -162,23 +165,19 @@ def phenotype_distance(extracted_hpos):
     # location is the starting index of an HPO term in the document.
     df['location'] = df['index'].apply(min)
 
-    # initialize a symmetric array
-    pairwise_dists = np.zeros((len(df), len(df)))
     # use max_idx as a normalization factor (a proxy for how long the document is)
     # TODO:
     # Maybe include the length of the text in the json object as a top-level key.
     max_idx = df['location'].max()
 
-    # loop through the combinations and the diagonal
+    # loop through the combinations and the diagonal, collect distances b/w each pair
+    phenotype_pairs = []
     for hpo_pair in half_product(len(df), len(df)):
-        x, y = hpo_pair
-        pairwise_dists[x, y] = abs(df.iloc[x]['location'] - df.iloc[y]['location']) / max_idx
+        x, y = sorted(hpo_pair, reverse=True)
+        distance = abs(df.iloc[x]['location'] - df.iloc[y]['location']) / max_idx
+        phenotype_pairs.append((df.iloc[x]['hpid'], df.iloc[y]['hpid'], distance))
 
-    # copy the upper half distances to the lower half
-    i_lower = np.tril_indices(len(df), -1)
-    pairwise_dists[i_lower] = pairwise_dists.T[i_lower]
-
-    return pd.DataFrame(pairwise_dists, columns=df['hpid'].tolist(), index=df['hpid'].tolist())
+    return phenotype_pairs
 
 
 def self_evaluation(correct_spelling=False):
