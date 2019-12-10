@@ -43,18 +43,18 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_distances(self):
         test_cases = [tc.test_case0, tc.test_case1, tc.test_case2]
-        truth = [{'idx1': 'HP:0001290', 'idx2': 'HP:0001290', 'mean_score': 0.0},
-                 {'idx1': 'HP:0000218', 'idx2': 'HP:0001290', 'mean_score': 0.6979690117252931},
-                 {'idx1': 'HP:0000218', 'idx2': 'HP:0000218', 'mean_score': 0.0},
-                 {'idx1': 'HP:0001290', 'idx2': 'HP:0002014', 'mean_score': 0.18907035175879397},
-                 {'idx1': 'HP:0002014', 'idx2': 'HP:0002014', 'mean_score': 0.0},
-                 {'idx1': 'HP:0000218', 'idx2': 'HP:0002014', 'mean_score': 0.498429648241206}]
+        truth = [{'idx1': 'HP:0001290', 'idx2': 'HP:0001290', 'mean_score': 0.0, 'n': 3 },
+                 {'idx1': 'HP:0000218', 'idx2': 'HP:0001290', 'mean_score': 0.6979690117252931, 'n': 3},
+                 {'idx1': 'HP:0000218', 'idx2': 'HP:0000218', 'mean_score': 0.0, 'n': 3},
+                 {'idx1': 'HP:0001290', 'idx2': 'HP:0002014', 'mean_score': 0.18907035175879397, 'n': 2},
+                 {'idx1': 'HP:0002014', 'idx2': 'HP:0002014', 'mean_score': 0.0, 'n': 2},
+                 {'idx1': 'HP:0000218', 'idx2': 'HP:0002014', 'mean_score': 0.498429648241206, 'n': 2}]
         result = distances(test_cases, min_n_distances=1).to_dict("records")
         self.assertEqual(result, truth)
 
-        truth = [{'idx1': 'HP:0001290', 'idx2': 'HP:0001290', 'mean_score': 0.0},
-                 {'idx1': 'HP:0000218', 'idx2': 'HP:0001290', 'mean_score': 0.6979690117252931},
-                 {'idx1': 'HP:0000218', 'idx2': 'HP:0000218', 'mean_score': 0.0}]
+        truth = [{'idx1': 'HP:0001290', 'idx2': 'HP:0001290', 'mean_score': 0.0, 'n': 3},
+                 {'idx1': 'HP:0000218', 'idx2': 'HP:0001290', 'mean_score': 0.6979690117252931, 'n': 3},
+                 {'idx1': 'HP:0000218', 'idx2': 'HP:0000218', 'mean_score': 0.0, 'n': 3}]
 
         result = distances(test_cases, min_n_distances=2).to_dict("records")
         self.assertEqual(result, truth)

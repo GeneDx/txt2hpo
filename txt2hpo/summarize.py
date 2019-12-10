@@ -73,10 +73,10 @@ def distances(array_of_phenotype_distances, min_n_distances=2, summary_method='m
     # summarize
     if summary_method == 'mean':
         dfs_merged['mean_score'] = dfs_merged['values'].apply(np.mean)
-        dfs_merged = dfs_merged[['mean_score']]
+        dfs_merged = dfs_merged[['mean_score', 'n']]
 
     elif summary_method == 'min':
         dfs_merged['min_score'] = dfs_merged['values'].apply(np.min)
-        dfs_merged = dfs_merged[['min_score']]
+        dfs_merged = dfs_merged[['min_score', 'n']]
 
     return dfs_merged.reset_index()
