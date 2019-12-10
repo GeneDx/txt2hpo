@@ -1,8 +1,5 @@
 import json
 
-import pandas as pd
-
-from phenopy.util import half_product
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
@@ -147,37 +144,6 @@ def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
         return json.dumps(extracted_terms)
     else:
         return []
-
-
-def phenotype_distance(extracted_hpos):
-    """
-    Given the return from hpo, find the normalized distance between all terms in the document.
-    This could serve as a proxy for cooccurrence.
-    :param extracted_hpos: json string output of txt2hpo
-    :return: list of tuples (hpo1, hpo2, distance)
-    """
-
-    # load the extracted phenotypes into a pandas DataFrame
-    hpo_ids = json.loads(extracted_hpos)
-    df = pd.DataFrame(hpo_ids)
-    # make two rows for text offsets where more than one HPO term was identified
-    df = df.explode('hpid').reset_index(drop=True)
-    # location is the starting index of an HPO term in the document.
-    df['location'] = df['index'].apply(min)
-
-    # use max_idx as a normalization factor (a proxy for how long the document is)
-    # TODO:
-    # Maybe include the length of the text in the json object as a top-level key.
-    max_idx = df['location'].max()
-
-    # loop through the combinations and the diagonal, collect distances b/w each pair
-    phenotype_pairs = []
-    for hpo_pair in half_product(len(df), len(df)):
-        x, y = sorted(hpo_pair, reverse=True)
-        distance = abs(df.iloc[x]['location'] - df.iloc[y]['location']) / max_idx
-        phenotype_pairs.append((df.iloc[x]['hpid'], df.iloc[y]['hpid'], distance))
-
-    return phenotype_pairs
 
 
 def self_evaluation(correct_spelling=False):
