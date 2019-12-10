@@ -39,10 +39,10 @@ def phenotype_distance(extracted_hpos):
     return phenotype_pairs
 
 
-def distances(array_of_phenotype_distances, min_n_distances=2, summary_method='mean'):
+def distances(array_of_extracted_hpos, min_n_distances=2, summary_method='mean'):
     """
     Summarize array of phenotype distances generated from parsing distinct documents
-    :param array_of_distances: array of phenotype distances
+    :param array_of_extracted_hpos: array of phenotype distances
     :param min_n_distances: minimum number of coocurances / distances to summarize to filter
     :param summary_method: (mean,min) how to summarize coocurances / distances
     :return: pandas dataframe
@@ -52,11 +52,20 @@ def distances(array_of_phenotype_distances, min_n_distances=2, summary_method='m
         logger.critical(f'Summary method undefined: {summary_method} ')
         return dfs
     # process distances of each document into df
-    for hpo_obj in array_of_phenotype_distances:
-        phenotype_pairs = phenotype_distance(hpo_obj)
+    for extracted_hpo in array_of_extracted_hpos:
+
+        # get term-term pairwise distances for each document
+        phenotype_pairs = phenotype_distance(extracted_hpo)
+
+        # find identical pairs and combine their values
         grouped_pairs = group_pairs(phenotype_pairs)
+
+        # get summary metric for each term pair
         summarized_pairs = summarize_tuples(grouped_pairs)
+
+        # make a dataframe and append it to list
         tup_df = df_from_tuples(summarized_pairs)
+
         dfs.append(tup_df)
 
     # merge dataframes
