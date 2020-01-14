@@ -55,6 +55,19 @@ def assemble_groups(groups, phen_groups, max_neighbors):
     return phen_groups
 
 
+def permute_leave_one_out(list_, min_terms=2):
+    """Assemble lists by removing each of the terms"""
+    leave_one_out = []
+    for item in list_:
+        if len(item) <= min_terms:
+            continue
+        for i, x in enumerate(item):
+            permute = item.copy()
+            del permute[i]
+            leave_one_out.append(permute)
+    return leave_one_out
+
+
 def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
@@ -92,7 +105,9 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
                 start = tokens[phen_group[0]:phen_group[-1]+1].start_char
                 end = tokens[phen_group[0]:phen_group[-1]+1].end_char
 
-            extracted_terms.append({"hpid":hpids, "index":[base_index + start, base_index + end], "matched":matched_string.text})
+            extracted_terms.append({"hpid": hpids,
+                                    "index": [base_index + start, base_index + end],
+                                    "matched": matched_string.text})
     return extracted_terms
 
 
@@ -128,9 +143,12 @@ def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
 
         # Group token indices
         groups = group_sequence(phenindeces)
-        phen_groups = []
+
+        # Add leave one out groups
+        groups += permute_leave_one_out(groups)
 
         # Add individual word token indices to phenotype groups
+        phen_groups = []
         phen_groups += [[x] for x in phenindeces]
 
         # Find and fuse adjacent phenotype groups

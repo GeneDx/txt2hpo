@@ -39,6 +39,14 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "delayed development"}])
         self.assertEqual(hpo("delayed development"), truth)
 
+        # Test extracting multiword phenotype following non phenotypic term
+        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [10, 22], "matched": "hearing loss"}])
+        self.assertEqual(hpo("preceding Hearing loss"), truth)
+
+        # Test extracting multiword phenotype preceding non phenotypic term
+        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss"}])
+        self.assertEqual(hpo("Hearing loss following"), truth)
+
         # Test extracting multiple phenotypes
         truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia"},
                  {"hpid": ["HP:0001263"], "index": [11, 30], "matched": "developmental delay"}])
