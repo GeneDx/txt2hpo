@@ -55,17 +55,24 @@ def assemble_groups(groups, phen_groups, max_neighbors):
     return phen_groups
 
 
-def permute_leave_one_out(list_, min_terms=2):
-    """Assemble lists by removing each of the terms"""
-    leave_one_out = []
-    for item in list_:
-        if len(item) <= min_terms:
+def permute_leave_one_out(original_list, min_terms=2):
+    """
+    Supplement lists of iterables with groups where each of the items is left out
+    :param original_list:
+    :param min_terms:
+    :return: supplemented list
+    [['1','2','3']] -> [['1', '2', '3'], ['2', '3'], ['1', '3'], ['1', '2']]
+    """
+
+    permuted_list = []
+    for group in original_list:
+        if len(group) <= min_terms:
             continue
-        for i, x in enumerate(item):
-            permute = item.copy()
-            del permute[i]
-            leave_one_out.append(permute)
-    return leave_one_out
+        for i, x in enumerate(group):
+            permuted_group = group.copy()
+            del permuted_group[i]
+            permuted_list.append(permuted_group)
+    return permuted_list
 
 
 def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
