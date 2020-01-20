@@ -39,6 +39,21 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "delayed development"}])
         self.assertEqual(hpo("delayed development"), truth)
 
+        # Test extracting multiword phenotype following an unrelated phenotypic term
+        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [6, 18], "matched": "hearing loss"}])
+        self.assertEqual(hpo("delay Hearing loss"), truth)
+
+        # Test extracting multiword phenotype preceding an unrelated phenotypic term
+        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss"}])
+        self.assertEqual(hpo("Hearing loss following"), truth)
+
+        # Test extracting two multiword phenotype preceding interrupted by an unrelated phenotypic term
+        truth = json.dumps([
+                            {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay"},
+                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss"}
+                            ])
+        self.assertEqual(hpo("Hearing loss following developmental delay"), truth)
+
         # Test extracting multiple phenotypes
         truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia"},
                  {"hpid": ["HP:0001263"], "index": [11, 30], "matched": "developmental delay"}])
@@ -53,18 +68,22 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         # Test extracting multiple phenotypes with max_neighbors
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay"}])
-        self.assertEqual(hpo("developmental and delay", max_neighbors=2), truth)
+        self.assertEqual(hpo("developmental and delay", max_neighbors=3), truth)
         truth = []
         self.assertEqual(hpo("developmental and delay", max_neighbors=1), truth)
 
         # Test extracting single phenotype followed by multiword phenotype
-        truth = json.dumps([{"hpid": ["HP:0100710"], "index": [17, 26], "matched": "impulsive"},
-                 {"hpid": ["HP:0000750"], "index": [0, 12], "matched": "speech delay"}])
+        truth = json.dumps([
+                 {"hpid": ["HP:0000750"], "index": [0, 12], "matched": "speech delay"},
+                 {"hpid": ["HP:0100710"], "index": [17, 26], "matched": "impulsive"}
+        ])
         self.assertEqual(hpo("speech delay and impulsive"), truth)
 
         # Test extracting multiword phenotype followed by single phenotype
-        truth = json.dumps([{"hpid": ["HP:0100710"], "index": [0, 9], "matched": "impulsive"},
-                 {"hpid": ["HP:0000750"], "index": [14, 26], "matched": "speech delay"}])
+        truth = json.dumps([
+                 {"hpid": ["HP:0100710"], "index": [0, 9], "matched": "impulsive"},
+                 {"hpid": ["HP:0000750"], "index": [14, 26], "matched": "speech delay"}
+                 ])
         self.assertEqual(hpo("impulsive and speech delay"), truth)
 
         # Test term indexing given max length of extracted text

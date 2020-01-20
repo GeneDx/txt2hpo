@@ -1,4 +1,7 @@
 import json
+import numpy as np
+from itertools import combinations
+from functools import lru_cache
 
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
@@ -39,22 +42,82 @@ def index_tokens(stemmed_tokens):
     return phenotokens, phenindeces
 
 
-def assemble_groups(groups, phen_groups, max_neighbors):
-    """Assemble adjacent groups of phenotypes into groups of various sizes"""
-    for i in range(len(groups)):
-        if groups[i] not in phen_groups:
-            phen_groups.append(groups[i])
+def assemble_groups(original, max_distance=5):
+    """
+    Join adjacent groups of phenotypes into new groups
+    [[1,2],[5,6]] -> {((1, 2), (5, 6)), (1, 2), (5, 6)}
+    :param original: Original list of lists of integers
+    :param max_distance: Maximum number of combinations
+    :return: set of tuples
+    """
+    ori_set = set(tuple(set(x)) for x in original)
+    fused_set = set()
+    final_set = set()
+    fused_set_uniq = set()
 
-        # make sure not to modify original groups object
-        adjacent_groups = groups[i].copy()
-        for j in range(1, max_neighbors):
-            if len(groups) > i + j:
-                adjacent_groups += groups[i + j]
-                if adjacent_groups not in phen_groups:
-                    phen_groups.append(adjacent_groups)
-    return phen_groups
+    for distance in range(2, max_distance):
+        combs = list(combinations(ori_set, distance))
+        for comb in combs:
+            fused_comb = tuple(set(np.concatenate(comb)))
+            if fused_comb in ori_set:
+                continue
+            else:
+                fused_set.add(tuple(set(comb)))
+
+        for item in fused_set:
+            if len(set(np.concatenate(item))) == len(np.concatenate(item)):
+                fused_set_uniq.add(item)
+        final_set = set(ori_set.union(fused_set_uniq))
+
+    return final_set
 
 
+def recombine_groups(group_indx, min_r_length=2, max_r_length=4):
+    """
+    Generate a set of all possible combinations for each group of indices
+    {((1, 2), (5,)), (1, 2), (5,)} -> [[1, 2], [1], [2], [5], [1, 2, 5], [1, 5], [2, 5]]
+    :param group_indx: set of tuples, output of assemble_groups
+    :param min_r_length: minimum length of combinations
+    :param max_r_length: maximum length of combinations
+    :return: list of lists of indices
+    """
+    return_list = []
+    for group in group_indx:
+        for r_length in range(min_r_length, max_r_length):
+            try:
+                new_comb = sorted(list(np.concatenate(group)))
+            except:
+                new_comb = list(group)
+            if new_comb not in return_list:
+                return_list.append(new_comb)
+            for new_mix_comb in list(combinations(new_comb, r_length)):
+                new_mix_comb = sorted(new_mix_comb)
+                if new_mix_comb not in return_list:
+                    return_list.append(list(new_mix_comb))
+    return return_list
+
+
+def permute_leave_one_out(original_list, min_terms=1):
+    """
+    Supplement lists of iterables with groups where each of the items is left out
+    :param original_list:
+    :param min_terms:
+    :return: supplemented list
+    [['1','2','3']] -> [['1', '2', '3'], ['2', '3'], ['1', '3'], ['1', '2']]
+    """
+    permuted_list = original_list.copy()
+    for group in original_list:
+        if len(group) <= min_terms:
+            continue
+        for i, x in enumerate(group):
+            permuted_group = group.copy()
+            del permuted_group[i]
+            if permuted_group not in permuted_list:
+                permuted_list.append(permuted_group)
+    return permuted_list
+
+
+#@lru_cache(maxsize=None)
 def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
@@ -65,7 +128,7 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
 
         # if multiple phenotypes, get all words between
         else:
-            grp_phen_tokens = " ".join(stemmed_tokens[min(phen_group):max(phen_group)+1])
+            grp_phen_tokens = " ".join(stemmed_tokens[min(phen_group):max(phen_group) + 1])
 
         # remove stop words and punctuation from group of phenotypes
         grp_phen_tokens = nlp(grp_phen_tokens)
@@ -83,20 +146,29 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
 
         # if found any hpids, append to extracted
         if hpids:
+
             if len(phen_group) == 1:
                 matched_string = tokens[phen_group[0]]
                 start = tokens[phen_group[0]].idx
                 end = start + len(tokens[phen_group[0]])
-            else:
-                matched_string = tokens[min(phen_group):max(phen_group)+1]
-                start = tokens[phen_group[0]:phen_group[-1]+1].start_char
-                end = tokens[phen_group[0]:phen_group[-1]+1].end_char
 
-            extracted_terms.append({"hpid":hpids, "index":[base_index + start, base_index + end], "matched":matched_string.text})
+
+            else:
+                matched_string = tokens[min(phen_group):max(phen_group) + 1]
+                start = tokens[min(phen_group):max(phen_group) + 1].start_char
+                end = tokens[min(phen_group):max(phen_group) + 1].end_char
+
+            found_term = dict(hpid=hpids,
+                              index=[base_index + start, base_index + end],
+                              matched=matched_string.text)
+
+            if found_term not in extracted_terms:
+                extracted_terms.append(found_term)
+
     return extracted_terms
 
 
-def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
+def hpo(text, correct_spelling=True, max_neighbors=3, max_length=1000000):
     """
     extracts hpo terms from text
     :param text: text of type string
@@ -128,16 +200,15 @@ def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
 
         # Group token indices
         groups = group_sequence(phenindeces)
-        phen_groups = []
 
-        # Add individual word token indices to phenotype groups
-        phen_groups += [[x] for x in phenindeces]
+        # Add leave one out groups
+        groups = permute_leave_one_out(groups)
 
         # Find and fuse adjacent phenotype groups
-        phen_groups = assemble_groups(groups, phen_groups, max_neighbors)
+        phen_groups = recombine_groups(assemble_groups(groups, max_distance=max_neighbors))
 
         # Extract hpo terms
-        extracted_terms += find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index=i * len_last_chunk)
+        extracted_terms += find_hpo_terms(tuple(phen_groups), tuple(stemmed_tokens), tokens, base_index=i * len_last_chunk)
         len_last_chunk = len(chunk)
 
     if extracted_terms:
@@ -190,6 +261,5 @@ def self_evaluation(correct_spelling=False):
 
     logger.info('Done \n')
 
-    logger.info(f"{(correct/total)*100} percent correct, {len(wrong)} items wrong")
+    logger.info(f"{(correct / total) * 100} percent correct, {len(wrong)} items wrong")
     return wrong
-
