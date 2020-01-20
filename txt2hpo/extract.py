@@ -1,6 +1,7 @@
 import json
 import numpy as np
 from itertools import combinations
+from functools import lru_cache
 
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
@@ -49,9 +50,9 @@ def assemble_groups(original, max_distance=5):
     :param max_distance: Maximum number of combinations
     :return: set of tuples
     """
-
     ori_set = set(tuple(set(x)) for x in original)
     fused_set = set()
+    final_set = set()
     fused_set_uniq = set()
 
     for distance in range(2, max_distance):
@@ -116,6 +117,7 @@ def permute_leave_one_out(original_list, min_terms=1):
     return permuted_list
 
 
+#@lru_cache(maxsize=None)
 def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
@@ -166,7 +168,7 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     return extracted_terms
 
 
-def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
+def hpo(text, correct_spelling=True, max_neighbors=3, max_length=1000000):
     """
     extracts hpo terms from text
     :param text: text of type string
@@ -203,10 +205,10 @@ def hpo(text, correct_spelling=True, max_neighbors=5, max_length=1000000):
         groups = permute_leave_one_out(groups)
 
         # Find and fuse adjacent phenotype groups
-        phen_groups = recombine_groups(assemble_groups(groups))
+        phen_groups = recombine_groups(assemble_groups(groups, max_distance=max_neighbors))
 
         # Extract hpo terms
-        extracted_terms += find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index=i * len_last_chunk)
+        extracted_terms += find_hpo_terms(tuple(phen_groups), tuple(stemmed_tokens), tokens, base_index=i * len_last_chunk)
         len_last_chunk = len(chunk)
 
     if extracted_terms:

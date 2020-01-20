@@ -68,9 +68,9 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         # Test extracting multiple phenotypes with max_neighbors
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay"}])
-        self.assertEqual(hpo("developmental and delay", max_neighbors=2), truth)
-#        truth = []
-#       self.assertEqual(hpo("developmental and delay", max_neighbors=1), truth)
+        self.assertEqual(hpo("developmental and delay", max_neighbors=3), truth)
+        truth = []
+        self.assertEqual(hpo("developmental and delay", max_neighbors=1), truth)
 
         # Test extracting single phenotype followed by multiword phenotype
         truth = json.dumps([

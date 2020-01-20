@@ -101,3 +101,4 @@ except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
     search_tree = build_search_tree()
     with open(config.get('tree', 'parsing_tree'), 'wb') as fh:
         pickle.dump(search_tree, fh)
+
