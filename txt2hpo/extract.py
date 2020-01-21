@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from itertools import combinations
+from itertools import combinations, chain
 from functools import lru_cache
 
 from txt2hpo.build_tree import update_progress, hpo_network
@@ -42,15 +42,22 @@ def index_tokens(stemmed_tokens):
     return phenotokens, phenindeces
 
 
-def assemble_groups(original, max_distance=5):
+def assemble_groups(original, max_distance=6, min_compl=0.20):
     """
     Join adjacent groups of phenotypes into new groups
     [[1,2],[5,6]] -> {((1, 2), (5, 6)), (1, 2), (5, 6)}
     :param original: Original list of lists of integers
     :param max_distance: Maximum number of combinations
-    :return: set of tuples
+    :param min_compl: Minimum fraction of complete term
+    :return: set of grouped tuple index sequences
     """
+
+    def missing_elements(L):
+        start, end = L[0], L[-1]
+        return sorted(set(range(start, end + 1)).difference(L))
+
     ori_set = set(tuple(set(x)) for x in original)
+
     fused_set = set()
     final_set = set()
     fused_set_uniq = set()
@@ -66,7 +73,11 @@ def assemble_groups(original, max_distance=5):
 
         for item in fused_set:
             if len(set(np.concatenate(item))) == len(np.concatenate(item)):
-                fused_set_uniq.add(item)
+                sorted_seq = sorted(list(chain(*item)))
+                gaps = missing_elements(sorted_seq)
+                completeness = len(sorted_seq) / (len(sorted_seq) + len(gaps))
+                if completeness >= min_compl:
+                    fused_set_uniq.add(item)
         final_set = set(ori_set.union(fused_set_uniq))
 
     return final_set
