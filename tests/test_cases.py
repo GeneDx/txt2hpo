@@ -93,3 +93,32 @@ test_case10 = """[{"hpid": ["HP:0001290"], "index": [895, 904], "matched": "hypo
   "index": [3233, 3257],
   "matched": "posteriorly rotated ears"},
  {"hpid": ["HP:0000276"], "index": [3265, 3274], "matched": "long face"}]"""
+
+
+test_case11_text = """Collin et al. (2008) examined 6 affected individuals from 3 families with retinitis pigmentosa, 
+    all but 1 of whom displayed characteristic RP abnormalities including night blindness as the initial symptom, 
+    retinal bone-spicule pigmentation and attenuated retinal vessels, constriction of visual fields, 
+    and a nonrecordable ERG or ERG responses in a rod-cone pattern.
+    Two unrelated patients had posterior subcapsular cataracts. 
+    The authors observed differences in the photoreceptor dystrophy between the families: 
+    in 1 patient from family A, the cones were more severely affected than the rods (cone-rod pattern)
+    and kinetic visual fields were not constricted but showed bilateral central scotomas; 
+    fundus examination revealed central abnormalities at the level of the retinal pigment epithelium 
+    and moderate attenuation of retinal vessels. Her 60-year-old brother also had central fundus lesions,
+    but his ERG showed neither rod nor cone activity. Family B had relatively late onset of a classic form of RP, 
+    with preservation of central vision. The proband in family C, who was the youngest patient in the study, 
+    was the only one who was legally blind, due to severely constricted visual fields"
+"""
+
+test_case11_out = [{"hpid": ["HP:0032118"], "index": [74, 83], "matched": "retinitis"},
+                   {"hpid": ["HP:0000510"], "index": [74, 94], "matched": "retinitis pigmentosa"},
+                    {"hpid": ["HP:0000662"], "index": [166, 181], "matched": "night blindness"},
+{"hpid": ["HP:0000618"], "index": [172, 181], "matched": "blindness"},
+{"hpid": ["HP:0001133"], "index": [272, 301], "matched": "constriction of visual fields"},
+{"hpid": ["HP:0007787"], "index": [394, 425], "matched": "posterior subcapsular cataracts"},
+{"hpid": ["HP:0000523"], "index": [404, 425], "matched": "subcapsular cataracts"},
+{"hpid": ["HP:0000518"], "index": [416, 425], "matched": "cataracts"},
+{"hpid": ["HP:0000603"], "index": [680, 695], "matched": "central scotoma"},
+{"hpid": ["HP:0000575"], "index": [688, 695], "matched": "scotoma"},
+
+]

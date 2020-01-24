@@ -42,7 +42,7 @@ def index_tokens(stemmed_tokens):
     return phenotokens, phenindeces
 
 
-def assemble_groups(original, max_distance=6, min_compl=0.20):
+def assemble_groups(original, max_distance=2, min_compl=0.20):
     """
     Join adjacent groups of phenotypes into new groups
     [[1,2],[5,6]] -> {((1, 2), (5, 6)), (1, 2), (5, 6)}
@@ -62,7 +62,7 @@ def assemble_groups(original, max_distance=6, min_compl=0.20):
     final_set = set()
     fused_set_uniq = set()
 
-    for distance in range(2, max_distance):
+    for distance in range(1, max_distance):
         combs = list(combinations(ori_set, distance))
         for comb in combs:
             fused_comb = tuple(set(np.concatenate(comb)))
@@ -83,7 +83,7 @@ def assemble_groups(original, max_distance=6, min_compl=0.20):
     return final_set
 
 
-def recombine_groups(group_indx, min_r_length=2, max_r_length=4):
+def recombine_groups(group_indx, min_r_length=2, max_r_length=3):
     """
     Generate a set of all possible combinations for each group of indices
     {((1, 2), (5,)), (1, 2), (5,)} -> [[1, 2], [1], [2], [5], [1, 2, 5], [1, 5], [2, 5]]
@@ -179,7 +179,7 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     return extracted_terms
 
 
-def hpo(text, correct_spelling=True, max_neighbors=3, max_length=1000000):
+def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
     """
     extracts hpo terms from text
     :param text: text of type string
@@ -216,7 +216,9 @@ def hpo(text, correct_spelling=True, max_neighbors=3, max_length=1000000):
         groups = permute_leave_one_out(groups)
 
         # Find and fuse adjacent phenotype groups
-        phen_groups = recombine_groups(assemble_groups(groups, max_distance=max_neighbors))
+        assembled_groups = assemble_groups(groups, max_distance=max_neighbors)
+
+        phen_groups = recombine_groups(assembled_groups)
 
         # Extract hpo terms
         extracted_terms += find_hpo_terms(tuple(phen_groups), tuple(stemmed_tokens), tokens, base_index=i * len_last_chunk)
@@ -225,7 +227,7 @@ def hpo(text, correct_spelling=True, max_neighbors=3, max_length=1000000):
     if extracted_terms:
         return json.dumps(extracted_terms)
     else:
-        return []
+        return json.dumps([])
 
 
 def self_evaluation(correct_spelling=False):
