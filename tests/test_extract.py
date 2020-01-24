@@ -1,9 +1,17 @@
 import unittest
 import json
+import time
 
 from txt2hpo.extract import hpo, group_sequence
+from tests.test_cases import *
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
+    def setUp(self):
+        self.startTime = time.time()
+
+    def tearDown(self):
+        t = time.time() - self.startTime
+        print('%s: %.3f' % (self.id(), t))
 
     def test_group_sequence(self):
         truth = [[0, 1], [3]]
@@ -63,13 +71,13 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic"}])
         self.assertEqual(hpo("hyptonic", correct_spelling=True), truth)
 
-        truth = []
+        truth = json.dumps([])
         self.assertEqual(hpo("hyptonic", correct_spelling=False), truth)
 
         # Test extracting multiple phenotypes with max_neighbors
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay"}])
         self.assertEqual(hpo("developmental and delay", max_neighbors=3), truth)
-        truth = []
+        truth = json.dumps([])
         self.assertEqual(hpo("developmental and delay", max_neighbors=1), truth)
 
         # Test extracting single phenotype followed by multiword phenotype
@@ -93,3 +101,23 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                 {"hpid": ["HP:0001290"], "index": [21, 30], "matched": "hypotonia"}
                             ])
         self.assertEqual(hpo("developmental delay, hypotonia", max_length=20), truth)
+
+    def test_hpo_big_text_spellcheck_on(self):
+        # test parsing a page
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2))), 8)
+
+    def test_hpo_big_text_spellcheck_off(self):
+        # test parsing a page
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2, correct_spelling=False))), 8)
+
+    def test_hpo_big_text_spellcheck_off_max3(self):
+        # test parsing a page
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=3, correct_spelling=False))), 9)
+
+    def test_hpo_big_text_max_neighbors(self):
+        # test parsing a page
+        hpo_max_2 = json.loads(hpo(test_case11_text, max_neighbors=2))
+        hpo_max_3 = json.loads(hpo(test_case11_text, max_neighbors=3))
+
+        self.assertNotEqual(hpo_max_2, hpo_max_3)
+
