@@ -140,3 +140,41 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         hpo_max_3 = json.loads(hpo(test_case11_text, max_neighbors=3))
 
         self.assertNotEqual(hpo_max_2, hpo_max_3)
+
+    def test_iteration_over_chunks(self):
+        # test performing multiple extractions in a row
+        sentences = ['developmental delay', 'hypotonia']
+        for sentence in sentences:
+            result = json.loads(hpo(sentence, correct_spelling=False))
+            print(result)
+            self.assertNotEqual(len(result), 0)
+        sentences = ['hypotonia', 'developmental delay']
+
+        for sentence in sentences:
+            result = json.loads(hpo(sentence, correct_spelling=False))
+            print(result)
+            self.assertNotEqual(len(result), 0)
+
+        sentences = ['developmental delay', 'hypotonia']
+        for sentence in sentences:
+            result = json.loads(hpo(sentence, correct_spelling=True))
+            print(result)
+            self.assertNotEqual(len(result), 0)
+        sentences = ['hypotonia', 'developmental delay']
+
+        for sentence in sentences:
+            result = json.loads(hpo(sentence, correct_spelling=True))
+            print(result)
+            self.assertNotEqual(len(result), 0)
+
+        sentences = ['developmental delay', 'hyptonia']
+        for sentence in sentences:
+            result = json.loads(hpo(sentence, correct_spelling=True))
+            print(result)
+            self.assertNotEqual(len(result), 0)
+        sentences = ['hyptonia', 'developmental delay']
+
+        for sentence in sentences:
+            result = json.loads(hpo(sentence, correct_spelling=True))
+            print(result)
+            self.assertNotEqual(len(result), 0)
