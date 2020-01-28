@@ -83,7 +83,7 @@ def assemble_groups(original, max_distance=2, min_compl=0.20):
     return final_set
 
 
-def recombine_groups(group_indx, min_r_length=2, max_r_length=3):
+def recombine_groups(group_indx, min_r_length=1, max_r_length=3):
     """
     Generate a set of all possible combinations for each group of indices
     {((1, 2), (5,)), (1, 2), (5,)} -> [[1, 2], [1], [2], [5], [1, 2, 5], [1, 5], [2, 5]]
