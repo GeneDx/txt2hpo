@@ -196,10 +196,14 @@ def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
     chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
     len_last_chunk = 1
     for i, chunk in enumerate(chunks):
+
         if correct_spelling:
             chunk = spellcheck(chunk)
-            if len(chunk) < max_length:
-                nlp.max_length = len(chunk)
+
+        if len(chunk) < max_length:
+            nlp.max_length = len(chunk)
+
+
 
         tokens = nlp(chunk)
 
