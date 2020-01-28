@@ -200,11 +200,6 @@ def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
         if correct_spelling:
             chunk = spellcheck(chunk)
 
-        if len(chunk) < max_length:
-            nlp.max_length = len(chunk)
-
-
-
         tokens = nlp(chunk)
 
         # Stem tokens
