@@ -74,6 +74,16 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         truth = json.dumps([])
         self.assertEqual(hpo("hyptonic", correct_spelling=False), truth)
 
+        truth = json.dumps([{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia"},
+                        {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures"}])
+
+        self.assertEqual(truth, hpo("Female with multiple fractures and osteopenia NA NA", correct_spelling=True))
+        self.assertEqual(truth, hpo("Female with multiple fractures and osteopenia NA NA", correct_spelling=False))
+
+        truth = json.dumps([{"hpid": ["HP:0001156"], "index": [30, 43], "matched": "brachydactyly"}])
+
+        self.assertEqual(truth, hpo("Female with fourth metacarpal brachydactyly"))
+
         # Test extracting multiple phenotypes with max_neighbors
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay"}])
         self.assertEqual(hpo("developmental and delay", max_neighbors=3), truth)
@@ -104,15 +114,15 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
-        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2))), 8)
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2))), 10)
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
-        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2, correct_spelling=False))), 8)
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2, correct_spelling=False))), 10)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
-        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=3, correct_spelling=False))), 9)
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=3, correct_spelling=False))), 11)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
@@ -120,4 +130,3 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         hpo_max_3 = json.loads(hpo(test_case11_text, max_neighbors=3))
 
         self.assertNotEqual(hpo_max_2, hpo_max_3)
-
