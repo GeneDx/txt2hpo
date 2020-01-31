@@ -1,4 +1,5 @@
 import pandas as pd
+
 import math
 
 
@@ -35,3 +36,13 @@ def df_from_tuples(tuples):
     tup_df.index = pd.MultiIndex.from_arrays(tup_df[['term_a', 'term_b']].values.T, names=['idx1', 'idx2'])
     tup_df = tup_df[['score']]
     return tup_df
+
+
+def score_term_given_context(term, context, model):
+    """
+    Score doc2vec similarity of a term and context
+    :param term: HPO ID
+    :param context: text of context from which the term was extracted
+    :param model:  doc2vec model
+    :return: float
+    """

@@ -1,7 +1,7 @@
 import spacy
 from txt2hpo.config import logger
 from nltk.stem import RegexpStemmer
-
+from txt2hpo.config import config
 
 try:
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
@@ -21,3 +21,10 @@ for not_a_stop in remove_from_stops.split(" "):
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
 
+
+def load_model():
+    if 'doc2vec' in config['models']:
+        from gensim.parsing.preprocessing import remove_stopwords
+        from gensim.utils import simple_preprocess as preprocess
+        logger.info("Loaded doc2vec model")
+        return gensim.models.doc2vec.Doc2Vec.load(config['models']['doc2vec'])

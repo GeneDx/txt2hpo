@@ -6,7 +6,7 @@ from functools import lru_cache
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
-from txt2hpo.nlp import nlp
+from txt2hpo.nlp import nlp, load_model
 from txt2hpo.nlp import st
 from txt2hpo.build_tree import search_tree
 
@@ -128,7 +128,6 @@ def permute_leave_one_out(original_list, min_terms=1):
     return permuted_list
 
 
-#@lru_cache(maxsize=None)
 def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
@@ -163,15 +162,33 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
                 start = tokens[phen_group[0]].idx
                 end = start + len(tokens[phen_group[0]])
 
-
             else:
                 matched_string = tokens[min(phen_group):max(phen_group) + 1]
                 start = tokens[min(phen_group):max(phen_group) + 1].start_char
                 end = tokens[min(phen_group):max(phen_group) + 1].end_char
 
+            if min(phen_group) < 5:
+                context_start = 0
+            else:
+                context_start = min(phen_group) - 5
+
+            if max(phen_group) + 5 >= len(tokens)-1:
+                context_end = len(tokens)-1
+
+            else:
+                max(phen_group) + 5
+
+            if context_start == context_end:
+                context = tokens[context_start]
+
+            else:
+                context = tokens[context_start:context_end]
+
             found_term = dict(hpid=hpids,
                               index=[base_index + start, base_index + end],
-                              matched=matched_string.text)
+                              matched=matched_string.text,
+                              context=context.text
+                              )
 
             if found_term not in extracted_terms:
                 extracted_terms.append(found_term)
@@ -179,13 +196,33 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     return extracted_terms
 
 
-def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
+def conflict_resolver(extracted_terms):
+    model = load_model()
+    if not model:
+        logger.critical("Doc2vec model does not exist or could not be loaded")
+        return extracted_terms
+
+    resolved_terms = []
+
+    for entry in extracted_terms:
+        hpids, index, matched, context = entry.items()
+
+    return resolved_terms
+
+
+def hpo(text,
+        correct_spelling=True,
+        max_neighbors=2,
+        max_length=1000000,
+        resolve_conflicts=False,
+        ):
     """
     extracts hpo terms from text
     :param text: text of type string
     :param correct_spelling: (True,False) attempt to correct spelling using spellcheck
     :param max_neighbors: (int) max number of phenotypic groups to attempt to search for a matching phenotype
     :param max_length: (int) max document length in characters, higher limit will require more memory
+    :param resolve_conflicts: (True,False) loads big model
     :return: json of hpo terms, their indices in text and matched string
     """
 
@@ -224,6 +261,9 @@ def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
         len_last_chunk = len(chunk)
 
     if extracted_terms:
+        if resolve_conflicts:
+            extracted_terms = conflict_resolver(extracted_terms)
+
         return json.dumps(extracted_terms)
     else:
         return json.dumps([])

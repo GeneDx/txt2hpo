@@ -64,6 +64,7 @@ def build_search_tree():
                 elif node not in terms[token][len(tokens)][name_identifier]:
                     terms[token][len(tokens)][name_identifier].append(node)
 
+
         i += 1
         progress = i/n_nodes
         update_progress(progress)
