@@ -1,12 +1,11 @@
 import json
 import numpy as np
 from itertools import combinations, chain
-from functools import lru_cache
 
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
-from txt2hpo.nlp import nlp, load_model
+from txt2hpo.nlp import nlp, load_model, similarity_term_to_context
 from txt2hpo.nlp import st
 from txt2hpo.build_tree import search_tree
 
@@ -198,6 +197,11 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_wind
 
 
 def conflict_resolver(extracted_terms):
+    """
+    Pick most likely HPO ID based on context
+    :param extracted_terms: list of dictionaries identified by extract_hpo_terms
+    :return: list of dictionaries with resolved conflicts
+    """
     model = load_model()
     if not model:
         logger.critical("Doc2vec model does not exist or could not be loaded")
@@ -206,8 +210,14 @@ def conflict_resolver(extracted_terms):
     resolved_terms = []
 
     for entry in extracted_terms:
-        hpids, index, matched, context = entry.items()
-
+        similarity_scores = []
+        if len(entry['hpid']) > 1:
+            for term in entry['hpid']:
+                similarity_scores.append(similarity_term_to_context(term, entry['context']))
+            idx_least_likely_term = similarity_scores.index(min(similarity_scores))
+            least_likely_term = entry['hpid'][idx_least_likely_term]
+            entry['hpid'].remove(least_likely_term)
+        resolved_terms.append(entry)
     return resolved_terms
 
 

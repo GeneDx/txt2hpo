@@ -2,23 +2,10 @@ import configparser
 import pickle
 import sys
 from txt2hpo.config import logger, config
+from txt2hpo.util import hpo_network
 from txt2hpo.nlp import nlp
 from txt2hpo.nlp import st
-from phenopy.config import config as phenopy_config
 
-from phenopy import generate_annotated_hpo_network
-
-
-obo_file = phenopy_config.get('hpo', 'obo_file')
-
-disease_to_phenotype_file = phenopy_config.get('hpo', 'disease_to_phenotype_file')
-
-hpo_network, alt2prim, disease_records = \
-    generate_annotated_hpo_network(obo_file,
-                                   disease_to_phenotype_file,
-                                   annotations_file=None,
-                                   ages_distribution_file=None
-                                   )
 
 def build_search_tree():
     """

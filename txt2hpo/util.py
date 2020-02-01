@@ -1,7 +1,20 @@
 import pandas as pd
 
 import math
+from phenopy.config import config as phenopy_config
+from phenopy import generate_annotated_hpo_network
 
+
+obo_file = phenopy_config.get('hpo', 'obo_file')
+
+disease_to_phenotype_file = phenopy_config.get('hpo', 'disease_to_phenotype_file')
+
+hpo_network, alt2prim, disease_records = \
+    generate_annotated_hpo_network(obo_file,
+                                   disease_to_phenotype_file,
+                                   annotations_file=None,
+                                   ages_distribution_file=None
+                                   )
 
 def group_pairs(phenotype_pairs):
     """group unique keys and combine their values"""

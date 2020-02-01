@@ -1,5 +1,9 @@
 import spacy
+import gensim
+from gensim.parsing.preprocessing import remove_stopwords
+from gensim.utils import simple_preprocess as preprocess
 from txt2hpo.config import logger
+from txt2hpo.util import hpo_network
 from nltk.stem import RegexpStemmer
 from txt2hpo.config import config
 
@@ -24,7 +28,24 @@ st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
 
 def load_model():
     if 'doc2vec' in config['models']:
-        from gensim.parsing.preprocessing import remove_stopwords
-        from gensim.utils import simple_preprocess as preprocess
         logger.info("Loaded doc2vec model")
         return gensim.models.doc2vec.Doc2Vec.load(config['models']['doc2vec'])
+
+
+def similarity_term_to_context(term, context, model):
+    """
+    Score similarity (term|context)
+    :param term: hpo term
+    :param context: context of term
+    :param model: doc2vec model used to score term given context
+    :return: float
+    """
+    def remove_out_of_vocab(tokens):
+        return [x for x in tokens if x in model.wv.vocab]
+
+    hpo_term = hpo_network.nodes[term]
+    hpo_term_definition = hpo_term['name']
+    term_tokens = remove_out_of_vocab(preprocess(remove_stopwords(hpo_term_definition)))
+    context_tokens = remove_out_of_vocab(preprocess(remove_stopwords(context)))
+
+    return model.wv.n_similarity(term_tokens, context_tokens)
