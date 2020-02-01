@@ -128,7 +128,7 @@ def permute_leave_one_out(original_list, min_terms=1):
     return permuted_list
 
 
-def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
+def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_window):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
     for phen_group in phen_groups:
@@ -167,16 +167,17 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
                 start = tokens[min(phen_group):max(phen_group) + 1].start_char
                 end = tokens[min(phen_group):max(phen_group) + 1].end_char
 
-            if min(phen_group) < 5:
+
+            if min(phen_group) < context_window:
                 context_start = 0
             else:
-                context_start = min(phen_group) - 5
+                context_start = min(phen_group) - context_window
 
-            if max(phen_group) + 5 >= len(tokens)-1:
-                context_end = len(tokens)-1
+            if max(phen_group) + context_window >= len(tokens)-1:
+                context_end = len(tokens)
 
             else:
-                max(phen_group) + 5
+                context_end = max(phen_group) + context_window
 
             if context_start == context_end:
                 context = tokens[context_start]
@@ -214,6 +215,7 @@ def hpo(text,
         correct_spelling=True,
         max_neighbors=2,
         max_length=1000000,
+        context_window=8,
         resolve_conflicts=False,
         ):
     """
@@ -222,6 +224,7 @@ def hpo(text,
     :param correct_spelling: (True,False) attempt to correct spelling using spellcheck
     :param max_neighbors: (int) max number of phenotypic groups to attempt to search for a matching phenotype
     :param max_length: (int) max document length in characters, higher limit will require more memory
+    :param context_window: (int) dimensions of context to return number of tokens in each direction
     :param resolve_conflicts: (True,False) loads big model
     :return: json of hpo terms, their indices in text and matched string
     """
@@ -257,7 +260,11 @@ def hpo(text,
         phen_groups = recombine_groups(assembled_groups)
 
         # Extract hpo terms
-        extracted_terms += find_hpo_terms(tuple(phen_groups), tuple(stemmed_tokens), tokens, base_index=i * len_last_chunk)
+        extracted_terms += find_hpo_terms(tuple(phen_groups),
+                                          tuple(stemmed_tokens),
+                                          tokens,
+                                          base_index=i * len_last_chunk,
+                                          context_window=context_window)
         len_last_chunk = len(chunk)
 
     if extracted_terms:
