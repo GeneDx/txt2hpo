@@ -114,7 +114,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair"))
         self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair",correct_spelling=False))
 
-
         # Test extracting multiple phenotypes with max_neighbors
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay",
                              "context": "developmental and delay"}])
