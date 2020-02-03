@@ -44,4 +44,4 @@ def similarity_term_to_context(term, context, model):
     term_tokens = remove_out_of_vocab(preprocess(remove_stopwords(hpo_term_definition)))
     context_tokens = remove_out_of_vocab(preprocess(remove_stopwords(context)))
 
-    return model.wv.n_similarity(term_tokens, context_tokens)
+    return model.n_similarity(term_tokens, context_tokens)
