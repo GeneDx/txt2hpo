@@ -7,6 +7,7 @@ from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
 from txt2hpo.nlp import nlp, load_model, similarity_term_to_context
 from txt2hpo.nlp import st
+from txt2hpo.nlp import load_model
 from txt2hpo.build_tree import search_tree
 
 
@@ -213,7 +214,7 @@ def conflict_resolver(extracted_terms):
         similarity_scores = []
         if len(entry['hpid']) > 1:
             for term in entry['hpid']:
-                similarity_scores.append(similarity_term_to_context(term, entry['context']))
+                similarity_scores.append(similarity_term_to_context(term, entry['context'], model))
             idx_least_likely_term = similarity_scores.index(min(similarity_scores))
             least_likely_term = entry['hpid'][idx_least_likely_term]
             entry['hpid'].remove(least_likely_term)

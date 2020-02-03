@@ -2,8 +2,9 @@ import unittest
 import json
 import time
 
-from txt2hpo.extract import hpo, group_sequence
+from txt2hpo.extract import hpo, group_sequence, conflict_resolver
 from tests.test_cases import *
+
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
     def setUp(self):
@@ -195,3 +196,28 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
             result = json.loads(hpo(sentence, correct_spelling=True))
             self.assertNotEqual(len(result), 0)
 
+    def test_conflict_resolver(self):
+
+        extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
+                    "index": [50, 53],
+                    "matched": "ASD",
+                    "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
+
+        truth = [{"hpid": ["HP:0000729"],
+                    "index": [50, 53],
+                    "matched": "ASD",
+                    "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted))
+
+        extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwear surgical repair for ASD except for 1 individual whose defect spontaneously closed"}]
+
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwear surgical repair for ASD except for 1 individual whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted))
