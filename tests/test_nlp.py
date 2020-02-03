@@ -1,9 +1,9 @@
 import unittest
-import json
 import time
 
-from txt2hpo.nlp import similarity_term_to_context, load_model
-from tests.test_cases import *
+from txt2hpo.nlp import similarity_term_to_context
+from txt2hpo.data import load_model
+
 
 class NLPCase(unittest.TestCase):
     def setUp(self):

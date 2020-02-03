@@ -5,9 +5,9 @@ from itertools import combinations, chain
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
-from txt2hpo.nlp import nlp, load_model, similarity_term_to_context
+from txt2hpo.nlp import nlp, similarity_term_to_context
 from txt2hpo.nlp import st
-from txt2hpo.nlp import load_model
+from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree
 
 

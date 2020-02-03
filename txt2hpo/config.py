@@ -67,13 +67,13 @@ else:
     logger.info(f'Using configuration file: {config_file}')
 
 
-if os.path.isfile(os.path.join(data_directory, 'doc2vec.model')):
-    config['models'] = {
-        'doc2vec': os.path.join(
-            data_directory, 'doc2vec.model',
-        )
-    }
-
-else:
-    config['models'] = {}
+# if os.path.isfile(os.path.join(data_directory, 'doc2vec.model')):
+#     config['models'] = {
+#         'doc2vec': os.path.join(
+#             data_directory, 'doc2vec.model',
+#         )
+#     }
+#
+# else:
+#     config['models'] = {}
 

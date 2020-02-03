@@ -1,3 +1,4 @@
+import os
 import spacy
 import gensim
 from gensim.parsing.preprocessing import remove_stopwords
@@ -25,11 +26,6 @@ for not_a_stop in remove_from_stops.split(" "):
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
 
-
-def load_model():
-    if 'doc2vec' in config['models']:
-        logger.info("Loaded doc2vec model")
-        return gensim.models.doc2vec.Doc2Vec.load(config['models']['doc2vec'])
 
 
 def similarity_term_to_context(term, context, model):
