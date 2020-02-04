@@ -9,6 +9,7 @@ from txt2hpo.nlp import nlp, similarity_term_to_context
 from txt2hpo.nlp import st
 from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree
+from txt2hpo.util import remove_key
 
 
 def group_sequence(lst):
@@ -221,13 +222,13 @@ def conflict_resolver(extracted_terms):
         resolved_terms.append(entry)
     return resolved_terms
 
-
 def hpo(text,
         correct_spelling=True,
         max_neighbors=2,
         max_length=1000000,
         context_window=8,
         resolve_conflicts=False,
+        return_context=False,
         ):
     """
     extracts hpo terms from text
@@ -281,6 +282,9 @@ def hpo(text,
     if extracted_terms:
         if resolve_conflicts:
             extracted_terms = conflict_resolver(extracted_terms)
+
+        if return_context is False:
+            extracted_terms = remove_key(extracted_terms, 'context')
 
         return json.dumps(extracted_terms)
     else:

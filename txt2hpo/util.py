@@ -49,3 +49,11 @@ def df_from_tuples(tuples):
     tup_df.index = pd.MultiIndex.from_arrays(tup_df[['term_a', 'term_b']].values.T, names=['idx1', 'idx2'])
     tup_df = tup_df[['score']]
     return tup_df
+
+
+def remove_key(dict_list, key):
+    """remove a key from each dict in a list of dictionaries"""
+    for d in dict_list:
+        if key in d:
+            del d[key]
+    return dict_list
