@@ -204,6 +204,8 @@ def conflict_resolver(extracted_terms):
     :param extracted_terms: list of dictionaries identified by extract_hpo_terms
     :return: list of dictionaries with resolved conflicts
     """
+
+    #TODO: Make model persist, so it only loads once per session
     model = load_model()
     if not model:
         logger.critical("Doc2vec model does not exist or could not be loaded")
@@ -229,10 +231,10 @@ def conflict_resolver(extracted_terms):
 
 def hpo(text,
         correct_spelling=True,
-        max_neighbors=2,
+        max_neighbors=3,
         max_length=1000000,
         context_window=8,
-        resolve_conflicts=False,
+        resolve_conflicts=True,
         return_context=False,
         ):
     """
@@ -296,7 +298,7 @@ def hpo(text,
         return json.dumps([])
 
 
-def self_evaluation(correct_spelling=False):
+def self_evaluation(correct_spelling=False, resolve_conflicts=False):
     total = 0
     correct = 0
     wrong = []
@@ -310,7 +312,7 @@ def self_evaluation(correct_spelling=False):
         total += 1
         term = hpo_network.nodes[node]['name']
         hpids = []
-        extracted = hpo(term, correct_spelling=correct_spelling)
+        extracted = hpo(term, correct_spelling=correct_spelling, resolve_conflicts=resolve_conflicts)
         if extracted:
             extracted = json.loads(extracted)
 
