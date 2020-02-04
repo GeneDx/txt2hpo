@@ -216,11 +216,16 @@ def conflict_resolver(extracted_terms):
         if len(entry['hpid']) > 1:
             for term in entry['hpid']:
                 similarity_scores.append(similarity_term_to_context(term, entry['context'], model))
-            idx_least_likely_term = similarity_scores.index(min(similarity_scores))
-            least_likely_term = entry['hpid'][idx_least_likely_term]
-            entry['hpid'].remove(least_likely_term)
+
+            # reduce matches until only one term left
+            for i in range(len(similarity_scores)-1):
+                idx_least_likely_term = similarity_scores.index(min(similarity_scores))
+                least_likely_term = entry['hpid'][idx_least_likely_term]
+                entry['hpid'].remove(least_likely_term)
+
         resolved_terms.append(entry)
     return resolved_terms
+
 
 def hpo(text,
         correct_spelling=True,

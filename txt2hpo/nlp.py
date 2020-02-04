@@ -1,12 +1,9 @@
-import os
 import spacy
-import gensim
 from gensim.parsing.preprocessing import remove_stopwords
 from gensim.utils import simple_preprocess as preprocess
 from txt2hpo.config import logger
 from txt2hpo.util import hpo_network
 from nltk.stem import RegexpStemmer
-from txt2hpo.config import config
 
 try:
     nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
@@ -27,7 +24,6 @@ for not_a_stop in remove_from_stops.split(" "):
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
 
 
-
 def similarity_term_to_context(term, context, model):
     """
     Score similarity (term|context)
@@ -37,11 +33,14 @@ def similarity_term_to_context(term, context, model):
     :return: float
     """
     def remove_out_of_vocab(tokens):
-        return [x for x in tokens if x in model.wv.vocab]
+        return [x for x in tokens if x in model.vocab]
 
     hpo_term = hpo_network.nodes[term]
     hpo_term_definition = hpo_term['name']
-    term_tokens = remove_out_of_vocab(preprocess(remove_stopwords(hpo_term_definition)))
-    context_tokens = remove_out_of_vocab(preprocess(remove_stopwords(context)))
-
-    return model.n_similarity(term_tokens, context_tokens)
+    term_tokens = remove_out_of_vocab(remove_stopwords(hpo_term_definition).split())
+    context_tokens = remove_out_of_vocab(remove_stopwords(context).split())
+    if term_tokens and context_tokens:
+        sim = model.n_similarity(term_tokens, context_tokens)
+    else:
+        sim = -0.999
+    return sim

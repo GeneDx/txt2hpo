@@ -20,6 +20,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_hpo(self):
 
+        # Test extracting an abbreviated phenotype
+        truth = json.dumps([{"hpid": ["HP:0001370"], "index": [0, 2], "matched": "RA"}])
+        self.assertEqual(hpo("RA"), truth)
+
         # Test extracting single phenotype
         truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia", "context": "hypotonia"}])
         self.assertEqual(hpo("hypotonia", return_context=True), truth)
@@ -206,13 +210,64 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
                   "index": [44, 47],
                   "matched": "ASD",
-                  "context": "secundum, all underwear surgical repair for ASD except for 1 individual \
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
                   whose defect spontaneously closed"}]
 
         truth = [{"hpid": ["HP:0001631"],
                   "index": [44, 47],
                   "matched": "ASD",
-                  "context": "secundum, all underwear surgical repair for ASD except for 1 individual \
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
                   whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted))
+
+        # Test conflict resolution if terms have identical context similarity scores
+
+        extracted = [{"hpid": ["HP:0001631", "HP:0001631"],
+                      "index": [44, 47],
+                      "matched": "ASD",
+                      "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                          whose defect spontaneously closed"}]
+
+        # Expected result remove only one term
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                          whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted))
+
+        # Test conflict resolution if terms have identical context similarity scores
+
+        extracted = [{"hpid": ["HP:0001631", "HP:0001631"],
+                      "index": [44, 47],
+                      "matched": "ASD",
+                      "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                  whose defect spontaneously closed"}]
+
+        # Expected result remove only one term
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                  whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted))
+
+        # Test conflict resolution if 2 of 3 terms have identical context similarity scores
+
+        extracted = [{"hpid": ["HP:0000729", "HP:0001631", "HP:0001631"],
+                      "index": [44, 47],
+                      "matched": "ASD",
+                      "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                          whose defect spontaneously closed"}]
+
+        # Expected result remove only one term
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                          whose defect spontaneously closed"}]
 
         self.assertEqual(truth, conflict_resolver(extracted))

@@ -58,6 +58,8 @@ def spellcheck(text):
         elif token.is_punct:
             corrected_text.append(token.text_with_ws)
 
+        elif len(token) < 5:
+            corrected_text.append(token.text_with_ws)
         else:
             corrected_text.append(correction(token.text))
             corrected_text.append(token.whitespace_)

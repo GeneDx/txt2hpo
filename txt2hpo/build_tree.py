@@ -14,7 +14,6 @@ def build_search_tree():
     :return: nested dictionary
     """
     terms = {}
-    print("")
     logger.info('Building a stemmed parse tree, this may take a few seconds, dont worry this is a one time thing \n')
     i = 0
     n_nodes = len(hpo_network.nodes)
@@ -50,7 +49,6 @@ def build_search_tree():
                     terms[token][len(tokens)][name_identifier] = [node]
                 elif node not in terms[token][len(tokens)][name_identifier]:
                     terms[token][len(tokens)][name_identifier].append(node)
-
 
         i += 1
         progress = i/n_nodes
