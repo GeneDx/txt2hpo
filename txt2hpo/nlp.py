@@ -1,6 +1,5 @@
 import spacy
 from gensim.parsing.preprocessing import remove_stopwords
-from gensim.utils import simple_preprocess as preprocess
 from txt2hpo.config import logger
 from txt2hpo.util import hpo_network
 from nltk.stem import RegexpStemmer

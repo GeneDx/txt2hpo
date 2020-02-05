@@ -4,7 +4,7 @@ import time
 
 from txt2hpo.extract import hpo, group_sequence, conflict_resolver
 from tests.test_cases import *
-
+from txt2hpo.data import load_model
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
     def setUp(self):
@@ -105,11 +105,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         self.assertEqual(truth, hpo("Female with fourth metacarpal brachydactyly", return_context=True))
 
-        truth = json.dumps([{"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
-                             {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
-                             {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"},
-                             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"}
-                             ])
+        truth = json.dumps([{"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
+                            {"hpid": ["HP:0000988"],"index": [18, 27], "matched": "skin rash"},
+                            {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
+                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}])
         self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair"))
         self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair",correct_spelling=False))
 
@@ -195,6 +194,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_conflict_resolver(self):
 
+        context_model = load_model()
         extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
                     "index": [50, 53],
                     "matched": "ASD",
@@ -205,7 +205,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                     "matched": "ASD",
                     "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
 
-        self.assertEqual(truth, conflict_resolver(extracted))
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
 
         extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
                   "index": [44, 47],
@@ -219,7 +219,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                   "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
                   whose defect spontaneously closed"}]
 
-        self.assertEqual(truth, conflict_resolver(extracted))
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
 
         # Test conflict resolution if terms have identical context similarity scores
 
@@ -236,7 +236,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                   "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
                           whose defect spontaneously closed"}]
 
-        self.assertEqual(truth, conflict_resolver(extracted))
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
 
         # Test conflict resolution if terms have identical context similarity scores
 
@@ -253,7 +253,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                   "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
                                   whose defect spontaneously closed"}]
 
-        self.assertEqual(truth, conflict_resolver(extracted))
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
 
         # Test conflict resolution if 2 of 3 terms have identical context similarity scores
 
@@ -270,4 +270,4 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                   "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
                                           whose defect spontaneously closed"}]
 
-        self.assertEqual(truth, conflict_resolver(extracted))
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))

@@ -11,6 +11,7 @@ from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree
 from txt2hpo.util import remove_key
 
+context_model = load_model()
 
 def group_sequence(lst):
     """
@@ -198,7 +199,7 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_wind
     return extracted_terms
 
 
-def conflict_resolver(extracted_terms):
+def conflict_resolver(extracted_terms, model):
     """
     Pick most likely HPO ID based on context
     :param extracted_terms: list of dictionaries identified by extract_hpo_terms
@@ -206,7 +207,6 @@ def conflict_resolver(extracted_terms):
     """
 
     #TODO: Make model persist, so it only loads once per session
-    model = load_model()
     if not model:
         logger.critical("Doc2vec model does not exist or could not be loaded")
         return extracted_terms
@@ -236,6 +236,7 @@ def hpo(text,
         context_window=8,
         resolve_conflicts=True,
         return_context=False,
+        context_model=context_model
         ):
     """
     extracts hpo terms from text
@@ -254,6 +255,8 @@ def hpo(text,
 
     chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
     len_last_chunk = 1
+
+
     for i, chunk in enumerate(chunks):
 
         if correct_spelling:
@@ -288,7 +291,7 @@ def hpo(text,
 
     if extracted_terms:
         if resolve_conflicts:
-            extracted_terms = conflict_resolver(extracted_terms)
+            extracted_terms = conflict_resolver(extracted_terms, context_model)
 
         if return_context is False:
             extracted_terms = remove_key(extracted_terms, 'context')

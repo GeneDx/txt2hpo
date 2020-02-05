@@ -1,10 +1,8 @@
-import os
 from gensim.models import KeyedVectors
-from txt2hpo.config import logger
+from txt2hpo.config import config
 
 
 def load_model():
-    model_path = os.path.join(os.path.dirname(__file__), 'doc2vec_dm0_tagUniq_ep51_sa1e-05_vs40_ws18_mc5_neg5.wv.gz')
-    wv = KeyedVectors.load(model_path)
-    logger.info("Loading doc2vec model")
+    if 'doc2vec' in config['models']:
+        wv = KeyedVectors.load(config['models']['doc2vec'])
     return wv
