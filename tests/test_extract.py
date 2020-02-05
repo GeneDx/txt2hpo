@@ -141,17 +141,21 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                             ])
         self.assertEqual(hpo("developmental delay, hypotonia", max_length=20), truth)
 
+    def test_aux_verb(self):
+
+        print(hpo("has had developmental delay"))
+
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
-        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2))), 10)
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2))), 9)
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
-        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2, correct_spelling=False))), 10)
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2, correct_spelling=False))), 9)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
-        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=3, correct_spelling=False))), 11)
+        self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=3, correct_spelling=False))), 10)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
