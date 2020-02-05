@@ -13,6 +13,7 @@ from txt2hpo.util import remove_key
 
 context_model = load_model()
 
+
 def group_sequence(lst):
     """
     Break a sequence of integers into continuous groups
@@ -158,28 +159,29 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_wind
 
         # if found any hpids, append to extracted
         if hpids:
+            # extract span of just matching phenotype tokens
+            matched_phen_idx = [stemmed_tokens.index(x) for x in grp_phen_tokens]
 
-            if len(phen_group) == 1:
-                matched_string = tokens[phen_group[0]]
-                start = tokens[phen_group[0]].idx
-                end = start + len(tokens[phen_group[0]])
+            if len(matched_phen_idx) == 1:
+                matched_string = tokens[matched_phen_idx[0]]
+                start = tokens[matched_phen_idx[0]].idx
+                end = start + len(tokens[matched_phen_idx[0]])
 
             else:
-                matched_string = tokens[min(phen_group):max(phen_group) + 1]
-                start = tokens[min(phen_group):max(phen_group) + 1].start_char
-                end = tokens[min(phen_group):max(phen_group) + 1].end_char
+                matched_string = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1]
+                start = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].start_char
+                end = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].end_char
 
-
-            if min(phen_group) < context_window:
+            if min(matched_phen_idx) < context_window:
                 context_start = 0
             else:
-                context_start = min(phen_group) - context_window
+                context_start = min(matched_phen_idx) - context_window
 
-            if max(phen_group) + context_window >= len(tokens)-1:
+            if max(matched_phen_idx) + context_window >= len(tokens)-1:
                 context_end = len(tokens)
 
             else:
-                context_end = max(phen_group) + context_window
+                context_end = max(matched_phen_idx) + context_window
 
             if context_start == context_end:
                 context = tokens[context_start]
@@ -246,6 +248,8 @@ def hpo(text,
     :param max_length: (int) max document length in characters, higher limit will require more memory
     :param context_window: (int) dimensions of context to return number of tokens in each direction
     :param resolve_conflicts: (True,False) loads big model
+    :param return_context: (True,False) add context fragment to json
+    :param context_model: (obj) model object
     :return: json of hpo terms, their indices in text and matched string
     """
 
@@ -255,7 +259,6 @@ def hpo(text,
 
     chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
     len_last_chunk = 1
-
 
     for i, chunk in enumerate(chunks):
 
