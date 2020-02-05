@@ -13,6 +13,7 @@ nltk = "*"
 spacy = "*"
 phenopy = "*"
 networkx = "*"
+gensim = "*"
 
 [requires]
 python_version = "3.7"

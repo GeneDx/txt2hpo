@@ -2,8 +2,9 @@ import unittest
 import json
 import time
 
-from txt2hpo.extract import hpo, group_sequence
+from txt2hpo.extract import hpo, group_sequence, conflict_resolver
 from tests.test_cases import *
+from txt2hpo.data import load_model
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
     def setUp(self):
@@ -19,86 +20,104 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_hpo(self):
 
+        # Test extracting an abbreviated phenotype
+        truth = json.dumps([{"hpid": ["HP:0001370"], "index": [0, 2], "matched": "RA"}])
+        self.assertEqual(hpo("RA"), truth)
+
         # Test extracting single phenotype
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia"}])
-        self.assertEqual(hpo("hypotonia"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia", "context": "hypotonia"}])
+        self.assertEqual(hpo("hypotonia", return_context=True), truth)
 
         # Test adding non phenotypic term
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia"}])
-        self.assertEqual(hpo("word hypotonia"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia", "context": "word hypotonia"}])
+        self.assertEqual(hpo("word hypotonia", return_context=True), truth)
 
         # Test handling punctuation
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia"}])
-        self.assertEqual(hpo("word, hypotonia"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia", "context": "word, hypotonia"}])
+        self.assertEqual(hpo("word, hypotonia", return_context=True), truth)
 
         # Test extracting a multiword phenotype
-        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "developmental delay"}])
-        self.assertEqual(hpo("developmental delay"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001263"],
+                             "index": [0, 19], "matched": "developmental delay",
+                             "context": "developmental delay"}])
+        self.assertEqual(hpo("developmental delay", return_context=True), truth)
 
         # Test extracting a multiword phenotype with reversed word order
-        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "delay developmental"}])
-        self.assertEqual(hpo("delay developmental"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19],
+                             "matched": "delay developmental",
+                             "context": "delay developmental"}])
+
+        self.assertEqual(hpo("delay developmental", return_context=True), truth)
 
         # Test extracting a phenotype with inflectional endings
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic"}])
-        self.assertEqual(hpo("hypotonic"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic", "context": "hypotonic"}])
+        self.assertEqual(hpo("hypotonic", return_context=True), truth)
 
         # Test extracting a multiword phenotype with inflectional endings and reversed order
-        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "delayed development"}])
-        self.assertEqual(hpo("delayed development"), truth)
+        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "delayed development",
+                             "context": "delayed development"}])
+        self.assertEqual(hpo("delayed development", return_context=True), truth)
 
         # Test extracting multiword phenotype following an unrelated phenotypic term
-        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [6, 18], "matched": "hearing loss"}])
-        self.assertEqual(hpo("delay Hearing loss"), truth)
+        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [6, 18],
+                             "matched": "hearing loss", "context":"delay hearing loss"}])
+        self.assertEqual(hpo("delay Hearing loss", return_context=True), truth)
 
         # Test extracting multiword phenotype preceding an unrelated phenotypic term
-        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss"}])
-        self.assertEqual(hpo("Hearing loss following"), truth)
+        truth = json.dumps([{"hpid": ["HP:0000365"], "index": [0, 12],
+                             "matched": "hearing loss", "context":"hearing loss following"}])
+        self.assertEqual(hpo("Hearing loss following", return_context=True), truth)
 
         # Test extracting two multiword phenotype preceding interrupted by an unrelated phenotypic term
         truth = json.dumps([
-                            {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay"},
-                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss"}
+                            {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay",
+                             "context": "hearing loss following developmental delay"},
+                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss",
+                             "context":"hearing loss following developmental delay"}
                             ])
-        self.assertEqual(hpo("Hearing loss following developmental delay"), truth)
+        self.assertEqual(hpo("Hearing loss following developmental delay", return_context=True), truth)
 
         # Test extracting multiple phenotypes
         truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia"},
-                 {"hpid": ["HP:0001263"], "index": [11, 30], "matched": "developmental delay"}])
+                 {"hpid": ["HP:0001263"], "index": [11, 30], "matched": "developmental delay"
+                  }])
         self.assertEqual(hpo("hypotonia, developmental delay"), truth)
 
         # Test spellchecker
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic"}])
-        self.assertEqual(hpo("hyptonic", correct_spelling=True), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic",
+                             "context":"hypotonic"}])
+        self.assertEqual(hpo("hyptonic", correct_spelling=True, return_context=True), truth)
 
         truth = json.dumps([])
-        self.assertEqual(hpo("hyptonic", correct_spelling=False), truth)
+        self.assertEqual(hpo("hyptonic", correct_spelling=False, return_context=True), truth)
 
-        truth = json.dumps([{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia"},
-                        {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures"}])
+        truth = json.dumps([{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia",
+                             "context":"Female with multiple fractures and osteopenia NA NA"},
+                        {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures",
+                         "context": "Female with multiple fractures and osteopenia NA NA"}])
 
-        self.assertEqual(truth, hpo("Female with multiple fractures and osteopenia NA NA", correct_spelling=True))
-        self.assertEqual(truth, hpo("Female with multiple fractures and osteopenia NA NA", correct_spelling=False))
+        self.assertEqual(truth, hpo("Female with multiple fractures and osteopenia NA NA",
+                                    correct_spelling=False,
+                                    return_context=True))
 
-        truth = json.dumps([{"hpid": ["HP:0001156"], "index": [30, 43], "matched": "brachydactyly"}])
+        truth = json.dumps([{"hpid": ["HP:0001156"], "index": [30, 43], "matched": "brachydactyly",
+                             "context": "female with fourth metacarpal brachydactyly"}])
 
-        self.assertEqual(truth, hpo("Female with fourth metacarpal brachydactyly"))
+        self.assertEqual(truth, hpo("Female with fourth metacarpal brachydactyly", return_context=True))
 
-        truth = json.dumps([{"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
-                             {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
-                             {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"},
-                             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"}
-
-                             ])
-        self.assertEqual(truth, hpo("Male with eczema, skin rash, and sparse hair"))
-        self.assertEqual(truth, hpo("Male with eczema, skin rash, and sparse hair",correct_spelling=False))
-
+        truth = json.dumps([{"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
+                            {"hpid": ["HP:0000988"],"index": [18, 27], "matched": "skin rash"},
+                            {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
+                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}])
+        self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair"))
+        self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair",correct_spelling=False))
 
         # Test extracting multiple phenotypes with max_neighbors
-        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay"}])
-        self.assertEqual(hpo("developmental and delay", max_neighbors=3), truth)
+        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay",
+                             "context": "developmental and delay"}])
+        self.assertEqual(hpo("developmental and delay", max_neighbors=3, return_context=True), truth)
         truth = json.dumps([])
-        self.assertEqual(hpo("developmental and delay", max_neighbors=1), truth)
+        self.assertEqual(hpo("developmental and delay", max_neighbors=1, return_context=True), truth)
 
         # Test extracting single phenotype followed by multiword phenotype
         truth = json.dumps([
@@ -146,35 +165,109 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         sentences = ['developmental delay', 'hypotonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=False))
-            print(result)
             self.assertNotEqual(len(result), 0)
         sentences = ['hypotonia', 'developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=False))
-            print(result)
             self.assertNotEqual(len(result), 0)
 
         sentences = ['developmental delay', 'hypotonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
-            print(result)
             self.assertNotEqual(len(result), 0)
         sentences = ['hypotonia', 'developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
-            print(result)
             self.assertNotEqual(len(result), 0)
 
         sentences = ['developmental delay', 'hyptonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
-            print(result)
             self.assertNotEqual(len(result), 0)
         sentences = ['hyptonia', 'developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
-            print(result)
             self.assertNotEqual(len(result), 0)
+
+    def test_conflict_resolver(self):
+
+        context_model = load_model()
+        extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
+                    "index": [50, 53],
+                    "matched": "ASD",
+                    "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
+
+        truth = [{"hpid": ["HP:0000729"],
+                    "index": [50, 53],
+                    "matched": "ASD",
+                    "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
+
+        extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                  whose defect spontaneously closed"}]
+
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                  whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
+
+        # Test conflict resolution if terms have identical context similarity scores
+
+        extracted = [{"hpid": ["HP:0001631", "HP:0001631"],
+                      "index": [44, 47],
+                      "matched": "ASD",
+                      "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                          whose defect spontaneously closed"}]
+
+        # Expected result remove only one term
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                          whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
+
+        # Test conflict resolution if terms have identical context similarity scores
+
+        extracted = [{"hpid": ["HP:0001631", "HP:0001631"],
+                      "index": [44, 47],
+                      "matched": "ASD",
+                      "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                  whose defect spontaneously closed"}]
+
+        # Expected result remove only one term
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                  whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))
+
+        # Test conflict resolution if 2 of 3 terms have identical context similarity scores
+
+        extracted = [{"hpid": ["HP:0000729", "HP:0001631", "HP:0001631"],
+                      "index": [44, 47],
+                      "matched": "ASD",
+                      "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                          whose defect spontaneously closed"}]
+
+        # Expected result remove only one term
+        truth = [{"hpid": ["HP:0001631"],
+                  "index": [44, 47],
+                  "matched": "ASD",
+                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
+                                          whose defect spontaneously closed"}]
+
+        self.assertEqual(truth, conflict_resolver(extracted, context_model))

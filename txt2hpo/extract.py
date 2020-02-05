@@ -1,15 +1,17 @@
 import json
 import numpy as np
 from itertools import combinations, chain
-from functools import lru_cache
 
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
-from txt2hpo.nlp import nlp
+from txt2hpo.nlp import nlp, similarity_term_to_context
 from txt2hpo.nlp import st
+from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree
+from txt2hpo.util import remove_key
 
+context_model = load_model()
 
 def group_sequence(lst):
     """
@@ -128,8 +130,7 @@ def permute_leave_one_out(original_list, min_terms=1):
     return permuted_list
 
 
-#@lru_cache(maxsize=None)
-def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
+def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_window):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
     for phen_group in phen_groups:
@@ -163,15 +164,34 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
                 start = tokens[phen_group[0]].idx
                 end = start + len(tokens[phen_group[0]])
 
-
             else:
                 matched_string = tokens[min(phen_group):max(phen_group) + 1]
                 start = tokens[min(phen_group):max(phen_group) + 1].start_char
                 end = tokens[min(phen_group):max(phen_group) + 1].end_char
 
+
+            if min(phen_group) < context_window:
+                context_start = 0
+            else:
+                context_start = min(phen_group) - context_window
+
+            if max(phen_group) + context_window >= len(tokens)-1:
+                context_end = len(tokens)
+
+            else:
+                context_end = max(phen_group) + context_window
+
+            if context_start == context_end:
+                context = tokens[context_start]
+
+            else:
+                context = tokens[context_start:context_end]
+
             found_term = dict(hpid=hpids,
                               index=[base_index + start, base_index + end],
-                              matched=matched_string.text)
+                              matched=matched_string.text,
+                              context=context.text
+                              )
 
             if found_term not in extracted_terms:
                 extracted_terms.append(found_term)
@@ -179,13 +199,53 @@ def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index):
     return extracted_terms
 
 
-def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
+def conflict_resolver(extracted_terms, model):
+    """
+    Pick most likely HPO ID based on context
+    :param extracted_terms: list of dictionaries identified by extract_hpo_terms
+    :return: list of dictionaries with resolved conflicts
+    """
+
+    #TODO: Make model persist, so it only loads once per session
+    if not model:
+        logger.critical("Doc2vec model does not exist or could not be loaded")
+        return extracted_terms
+
+    resolved_terms = []
+
+    for entry in extracted_terms:
+        similarity_scores = []
+        if len(entry['hpid']) > 1:
+            for term in entry['hpid']:
+                similarity_scores.append(similarity_term_to_context(term, entry['context'], model))
+
+            # reduce matches until only one term left
+            for i in range(len(similarity_scores)-1):
+                idx_least_likely_term = similarity_scores.index(min(similarity_scores))
+                least_likely_term = entry['hpid'][idx_least_likely_term]
+                entry['hpid'].remove(least_likely_term)
+
+        resolved_terms.append(entry)
+    return resolved_terms
+
+
+def hpo(text,
+        correct_spelling=True,
+        max_neighbors=3,
+        max_length=1000000,
+        context_window=8,
+        resolve_conflicts=True,
+        return_context=False,
+        context_model=context_model
+        ):
     """
     extracts hpo terms from text
     :param text: text of type string
     :param correct_spelling: (True,False) attempt to correct spelling using spellcheck
     :param max_neighbors: (int) max number of phenotypic groups to attempt to search for a matching phenotype
     :param max_length: (int) max document length in characters, higher limit will require more memory
+    :param context_window: (int) dimensions of context to return number of tokens in each direction
+    :param resolve_conflicts: (True,False) loads big model
     :return: json of hpo terms, their indices in text and matched string
     """
 
@@ -195,6 +255,8 @@ def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
 
     chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
     len_last_chunk = 1
+
+
     for i, chunk in enumerate(chunks):
 
         if correct_spelling:
@@ -220,16 +282,26 @@ def hpo(text, correct_spelling=True, max_neighbors=2, max_length=1000000):
         phen_groups = recombine_groups(assembled_groups)
 
         # Extract hpo terms
-        extracted_terms += find_hpo_terms(tuple(phen_groups), tuple(stemmed_tokens), tokens, base_index=i * len_last_chunk)
+        extracted_terms += find_hpo_terms(tuple(phen_groups),
+                                          tuple(stemmed_tokens),
+                                          tokens,
+                                          base_index=i * len_last_chunk,
+                                          context_window=context_window)
         len_last_chunk = len(chunk)
 
     if extracted_terms:
+        if resolve_conflicts:
+            extracted_terms = conflict_resolver(extracted_terms, context_model)
+
+        if return_context is False:
+            extracted_terms = remove_key(extracted_terms, 'context')
+
         return json.dumps(extracted_terms)
     else:
         return json.dumps([])
 
 
-def self_evaluation(correct_spelling=False):
+def self_evaluation(correct_spelling=False, resolve_conflicts=False):
     total = 0
     correct = 0
     wrong = []
@@ -243,7 +315,7 @@ def self_evaluation(correct_spelling=False):
         total += 1
         term = hpo_network.nodes[node]['name']
         hpids = []
-        extracted = hpo(term, correct_spelling=correct_spelling)
+        extracted = hpo(term, correct_spelling=correct_spelling, resolve_conflicts=resolve_conflicts)
         if extracted:
             extracted = json.loads(extracted)
 

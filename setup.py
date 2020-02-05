@@ -27,7 +27,8 @@ name=__project__,
         'pandas',
         'nltk',
         'spacy',
-        'networkx'
+        'networkx',
+        'gensim'
 
     ]
 )
