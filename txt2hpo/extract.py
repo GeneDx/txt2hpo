@@ -256,7 +256,8 @@ def hpo(text,
     nlp.max_length = max_length
 
     extracted_terms = []
-
+    if not text[0].isupper():
+        text = text.capitalize()
     chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
     len_last_chunk = 1
 
