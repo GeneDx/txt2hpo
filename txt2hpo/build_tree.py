@@ -7,14 +7,23 @@ from txt2hpo.nlp import nlp
 from txt2hpo.nlp import st
 
 
-def build_search_tree():
+def build_search_tree(custom_synonyms={}):
     """
     Build stemmed, search tree for phenotypes / n-grams
     :param hpo: hpo object from phenopy
+    :param custom_synonyms: dictionary of hpo-id (key), list of synonyms (value)
     :return: nested dictionary
     """
     terms = {}
     logger.info('Building a stemmed parse tree, this may take a few seconds, dont worry this is a one time thing \n')
+
+    for hpid, synonyms in custom_synonyms.items():
+        if hpid in hpo_network.nodes():
+            if 'synonyms' in hpo_network.nodes[hpid]:
+                hpo_network.nodes[hpid]['synonyms'] += synonyms
+            else:
+                hpo_network[hpid]['synonyms'] = synonyms
+
     i = 0
     n_nodes = len(hpo_network.nodes)
 
@@ -22,7 +31,6 @@ def build_search_tree():
         term = hpo_network.nodes[node]['name']
         if 'synonyms' in hpo_network.nodes[node]:
             synonyms = hpo_network.nodes[node]['synonyms']
-
         else:
             synonyms = []
 

@@ -8,7 +8,7 @@ from txt2hpo.spellcheck import spellcheck
 from txt2hpo.nlp import nlp, similarity_term_to_context
 from txt2hpo.nlp import st
 from txt2hpo.data import load_model
-from txt2hpo.build_tree import search_tree
+from txt2hpo.build_tree import search_tree, build_search_tree
 from txt2hpo.util import remove_key
 
 context_model = load_model()
@@ -32,7 +32,7 @@ def group_sequence(lst):
     return grouped
 
 
-def index_tokens(stemmed_tokens):
+def index_tokens(stemmed_tokens, search_tree):
     """index phenotype tokens by matching each stem against root of search tree"""
     phenotokens = []
     phenindeces = []
@@ -131,7 +131,7 @@ def permute_leave_one_out(original_list, min_terms=1):
     return permuted_list
 
 
-def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_window):
+def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_window, search_tree):
     """Match hpo terms from stemmed tree to indexed groups in text"""
     extracted_terms = []
     for phen_group in phen_groups:
@@ -237,6 +237,8 @@ def hpo(text,
         context_window=8,
         resolve_conflicts=True,
         return_context=False,
+        search_tree=search_tree,
+        custom_synonyms=None,
         model=context_model
         ):
     """
@@ -248,10 +250,13 @@ def hpo(text,
     :param context_window: (int) dimensions of context to return number of tokens in each direction
     :param resolve_conflicts: (True,False) loads big model
     :param return_context: (True,False) add context fragment to json
+    :param search_tree: (dict) nested dictionary
+    :param custom_synonyms: (dict) dictionary of additional synonyms to map
     :param model: (obj) model object
     :return: json of hpo terms, their indices in text and matched string
     """
-
+    if custom_synonyms:
+        search_tree = build_search_tree(custom_synonyms=custom_synonyms)
     nlp.max_length = max_length
 
     extracted_terms = []
@@ -271,7 +276,7 @@ def hpo(text,
         stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
 
         # Index tokens which match stemmed phenotypes
-        phenotokens, phenindeces = index_tokens(stemmed_tokens)
+        phenotokens, phenindeces = index_tokens(stemmed_tokens, search_tree)
 
         # Group token indices
         groups = group_sequence(phenindeces)
@@ -289,7 +294,9 @@ def hpo(text,
                                           tuple(stemmed_tokens),
                                           tokens,
                                           base_index=i * len_last_chunk,
-                                          context_window=context_window)
+                                          context_window=context_window,
+                                          search_tree=search_tree
+                                          )
         len_last_chunk = len(chunk)
 
     if extracted_terms:

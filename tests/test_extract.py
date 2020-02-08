@@ -6,6 +6,7 @@ from txt2hpo.extract import hpo, group_sequence, conflict_resolver
 from tests.test_cases import *
 from txt2hpo.data import load_model
 
+
 class ExtractPhenotypesTestCase(unittest.TestCase):
     def setUp(self):
         self.startTime = time.time()
