@@ -208,7 +208,6 @@ def conflict_resolver(extracted_terms, model):
     :return: list of dictionaries with resolved conflicts
     """
 
-    #TODO: Make model persist, so it only loads once per session
     if not model:
         logger.critical("Doc2vec model does not exist or could not be loaded")
         return extracted_terms
@@ -238,7 +237,7 @@ def hpo(text,
         context_window=8,
         resolve_conflicts=True,
         return_context=False,
-        context_model=context_model
+        model=context_model
         ):
     """
     extracts hpo terms from text
@@ -249,14 +248,15 @@ def hpo(text,
     :param context_window: (int) dimensions of context to return number of tokens in each direction
     :param resolve_conflicts: (True,False) loads big model
     :param return_context: (True,False) add context fragment to json
-    :param context_model: (obj) model object
+    :param model: (obj) model object
     :return: json of hpo terms, their indices in text and matched string
     """
 
     nlp.max_length = max_length
 
     extracted_terms = []
-
+    if not text[0].isupper():
+        text = text.capitalize()
     chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
     len_last_chunk = 1
 
@@ -294,7 +294,7 @@ def hpo(text,
 
     if extracted_terms:
         if resolve_conflicts:
-            extracted_terms = conflict_resolver(extracted_terms, context_model)
+            extracted_terms = conflict_resolver(extracted_terms, model)
 
         if return_context is False:
             extracted_terms = remove_key(extracted_terms, 'context')

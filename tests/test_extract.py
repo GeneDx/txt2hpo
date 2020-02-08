@@ -25,63 +25,63 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(hpo("RA"), truth)
 
         # Test extracting single phenotype
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia", "context": "hypotonia"}])
-        self.assertEqual(hpo("hypotonia", return_context=True), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonia", "context": "Hypotonia"}])
+        self.assertEqual(hpo("Hypotonia", return_context=True, correct_spelling=False), truth)
 
         # Test adding non phenotypic term
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia", "context": "word hypotonia"}])
-        self.assertEqual(hpo("word hypotonia", return_context=True), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia", "context": "Word hypotonia"}])
+        self.assertEqual(hpo("Word hypotonia", return_context=True), truth)
 
         # Test handling punctuation
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia", "context": "word, hypotonia"}])
-        self.assertEqual(hpo("word, hypotonia", return_context=True), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia", "context": "Word, hypotonia"}])
+        self.assertEqual(hpo("Word, hypotonia", return_context=True), truth)
 
         # Test extracting a multiword phenotype
         truth = json.dumps([{"hpid": ["HP:0001263"],
-                             "index": [0, 19], "matched": "developmental delay",
-                             "context": "developmental delay"}])
-        self.assertEqual(hpo("developmental delay", return_context=True), truth)
+                             "index": [0, 19], "matched": "Developmental delay",
+                             "context": "Developmental delay"}])
+        self.assertEqual(hpo("Developmental delay", return_context=True, correct_spelling=False), truth)
 
         # Test extracting a multiword phenotype with reversed word order
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19],
-                             "matched": "delay developmental",
-                             "context": "delay developmental"}])
+                             "matched": "Delay developmental",
+                             "context": "Delay developmental"}])
 
-        self.assertEqual(hpo("delay developmental", return_context=True), truth)
+        self.assertEqual(hpo("Delay developmental", return_context=True, correct_spelling=False), truth)
 
         # Test extracting a phenotype with inflectional endings
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic", "context": "hypotonic"}])
-        self.assertEqual(hpo("hypotonic", return_context=True), truth)
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonic", "context": "Hypotonic"}])
+        self.assertEqual(hpo("Hypotonic", return_context=True, correct_spelling=False), truth)
 
         # Test extracting a multiword phenotype with inflectional endings and reversed order
-        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "delayed development",
-                             "context": "delayed development"}])
-        self.assertEqual(hpo("delayed development", return_context=True), truth)
+        truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "Delayed development",
+                             "context": "Delayed development"}])
+        self.assertEqual(hpo("Delayed development", return_context=True, correct_spelling=False), truth)
 
         # Test extracting multiword phenotype following an unrelated phenotypic term
         truth = json.dumps([{"hpid": ["HP:0000365"], "index": [6, 18],
-                             "matched": "hearing loss", "context":"delay hearing loss"}])
-        self.assertEqual(hpo("delay Hearing loss", return_context=True), truth)
+                             "matched": "hearing loss", "context":"Delay hearing loss"}])
+        self.assertEqual(hpo("Delay hearing loss", return_context=True, correct_spelling=False), truth)
 
         # Test extracting multiword phenotype preceding an unrelated phenotypic term
         truth = json.dumps([{"hpid": ["HP:0000365"], "index": [0, 12],
-                             "matched": "hearing loss", "context":"hearing loss following"}])
-        self.assertEqual(hpo("Hearing loss following", return_context=True), truth)
+                             "matched": "Hearing loss", "context":"Hearing loss following"}])
+        self.assertEqual(hpo("Hearing loss following", return_context=True, correct_spelling=False), truth)
 
         # Test extracting two multiword phenotype preceding interrupted by an unrelated phenotypic term
         truth = json.dumps([
                             {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay",
-                             "context": "hearing loss following developmental delay"},
-                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "hearing loss",
-                             "context":"hearing loss following developmental delay"}
+                             "context": "Hearing loss following developmental delay"},
+                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "Hearing loss",
+                             "context":"Hearing loss following developmental delay"}
                             ])
-        self.assertEqual(hpo("Hearing loss following developmental delay", return_context=True), truth)
+        self.assertEqual(hpo("Hearing loss following developmental delay", return_context=True, correct_spelling=False), truth)
 
         # Test extracting multiple phenotypes
-        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonia"},
+        truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonia"},
                  {"hpid": ["HP:0001263"], "index": [11, 30], "matched": "developmental delay"
                   }])
-        self.assertEqual(hpo("hypotonia, developmental delay"), truth)
+        self.assertEqual(hpo("Hypotonia, developmental delay",correct_spelling=False), truth)
 
         # Test spellchecker
         truth = json.dumps([{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic",
@@ -109,8 +109,8 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                             {"hpid": ["HP:0000988"],"index": [18, 27], "matched": "skin rash"},
                             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
                             {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}])
-        self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair"))
-        self.assertEqual(truth, hpo("male with eczema, skin rash, and sparse hair",correct_spelling=False))
+        self.assertEqual(truth, hpo("Male with eczema, skin rash, and sparse hair"))
+        self.assertEqual(truth, hpo("Male with eczema, skin rash, and sparse hair",correct_spelling=False))
 
         # Test extracting multiple phenotypes with max_neighbors
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay",
@@ -141,10 +141,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                             ])
         self.assertEqual(hpo("developmental delay, hypotonia", max_length=20), truth)
 
-    def test_aux_verb(self):
-
-        print(hpo("has had developmental delay"))
-
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
         self.assertEqual(len(json.loads(hpo(test_case11_text, max_neighbors=2))), 9)
@@ -166,31 +162,31 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_iteration_over_chunks(self):
         # test performing multiple extractions in a row
-        sentences = ['developmental delay', 'hypotonia']
+        sentences = ['Developmental delay', 'Hypotonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=False))
             self.assertNotEqual(len(result), 0)
-        sentences = ['hypotonia', 'developmental delay']
+        sentences = ['Hypotonia', 'Developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=False))
             self.assertNotEqual(len(result), 0)
 
-        sentences = ['developmental delay', 'hypotonia']
+        sentences = ['Developmental delay', 'Hypotonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
             self.assertNotEqual(len(result), 0)
-        sentences = ['hypotonia', 'developmental delay']
+        sentences = ['Hypotonia', 'Developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
             self.assertNotEqual(len(result), 0)
 
-        sentences = ['developmental delay', 'hyptonia']
+        sentences = ['Developmental delay', 'Hyptonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
             self.assertNotEqual(len(result), 0)
-        sentences = ['hyptonia', 'developmental delay']
+        sentences = ['Hyptonia', 'Developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence, correct_spelling=True))
