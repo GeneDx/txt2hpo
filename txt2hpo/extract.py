@@ -11,7 +11,190 @@ from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree, build_search_tree
 from txt2hpo.util import remove_key
 
-context_model = load_model()
+
+class Extractor:
+
+    """ Converts text to HPO annotated JSON object
+
+    Args:
+        correct_spelling: (True,False) attempt to correct spelling using spellcheck
+        max_neighbors: (int) max number of phenotypic groups to attempt to search for a matching phenotype
+        max_length: (int) max document length in characters, higher limit will require more memory
+        context_window: (int) dimensions of context to return number of tokens in each direction
+        resolve_conflicts: (True,False) loads big model
+        return_context: (True,False) add context fragment to json
+        custom_synonyms: (dict) dictionary of additional synonyms to map
+    """
+
+    def __init__(self, correct_spelling=True, max_neighbors=3, max_length=1000000, context_window=8,
+                 resolve_conflicts=True, return_context=False, custom_synonyms=None):
+        self.correct_spelling = correct_spelling,
+        self.max_neighbors = max_neighbors,
+        self.max_length = max_length,
+        self.model = load_model()
+        self.context_window = context_window,
+        self.resolve_conflicts = resolve_conflicts,
+        self.return_context = return_context,
+        self.resolve_conflicts = resolve_conflicts
+        if custom_synonyms:
+            self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
+        else:
+            self.search_tree = search_tree
+
+    def hpo(self, text):
+        """
+        extracts hpo terms from text
+        :param text: text of type string
+        :return: json of hpo terms, their indices in text and matched string
+        """
+
+        nlp.max_length = self.max_length
+
+        extracted_terms = []
+        if not text[0].isupper():
+            text = text.capitalize()
+        chunks = [text[i:i + self.max_length] for i in range(0, len(text), self.max_length)]
+        len_last_chunk = 1
+
+        for i, chunk in enumerate(chunks):
+
+            if self.correct_spelling:
+                chunk = spellcheck(chunk)
+
+            tokens = nlp(chunk)
+
+            # Stem tokens
+            stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
+
+            # Index tokens which match stemmed phenotypes
+            phenotokens, phenindeces = index_tokens(stemmed_tokens, search_tree)
+
+            # Group token indices
+            groups = group_sequence(phenindeces)
+
+            # Add leave one out groups
+            groups = permute_leave_one_out(groups)
+
+            # Find and fuse adjacent phenotype groups
+            assembled_groups = assemble_groups(groups, max_distance=self.max_neighbors)
+
+            phen_groups = recombine_groups(assembled_groups)
+
+            # Extract hpo terms
+            extracted_terms += self.find_hpo_terms(tuple(phen_groups),
+                                              tuple(stemmed_tokens),
+                                              tokens,
+                                              base_index=i * len_last_chunk,
+                                              )
+            len_last_chunk = len(chunk)
+
+        if extracted_terms:
+            if self.resolve_conflicts:
+                extracted_terms = self.conflict_resolver(extracted_terms)
+
+            if self.return_context is False:
+                extracted_terms = remove_key(extracted_terms, 'context')
+
+            return json.dumps(extracted_terms)
+        else:
+            return json.dumps([])
+
+    def conflict_resolver(self, extracted_terms):
+        """
+        Pick most likely HPO ID based on context
+        :param extracted_terms: list of dictionaries identified by extract_hpo_terms
+        :return: list of dictionaries with resolved conflicts
+        """
+
+        if not self.model:
+            logger.critical("Doc2vec model does not exist or could not be loaded")
+            return extracted_terms
+
+        resolved_terms = []
+
+        for entry in extracted_terms:
+            similarity_scores = []
+            if len(entry['hpid']) > 1:
+                for term in entry['hpid']:
+                    similarity_scores.append(similarity_term_to_context(term, entry['context'], model))
+
+                # reduce matches until only one term left
+                for i in range(len(similarity_scores) - 1):
+                    idx_least_likely_term = similarity_scores.index(min(similarity_scores))
+                    least_likely_term = entry['hpid'][idx_least_likely_term]
+                    entry['hpid'].remove(least_likely_term)
+
+            resolved_terms.append(entry)
+        return resolved_terms
+
+    def find_hpo_terms(self, phen_groups, stemmed_tokens, tokens, base_index):
+        """Match hpo terms from stemmed tree to indexed groups in text"""
+        extracted_terms = []
+        for phen_group in phen_groups:
+            # if there is only one phenotype in a group
+            if len(phen_group) == 1:
+                grp_phen_tokens = stemmed_tokens[phen_group[0]]
+
+            # if multiple phenotypes, get all words between
+            else:
+                grp_phen_tokens = " ".join(stemmed_tokens[min(phen_group):max(phen_group) + 1])
+
+            # remove stop words and punctuation from group of phenotypes
+            grp_phen_tokens = nlp(grp_phen_tokens)
+            grp_phen_tokens = [x.text for x in grp_phen_tokens if not x.is_stop and not x.is_punct]
+
+            # sort to match same order as used in making keys for search tree
+            try_term_key = ' '.join(sorted(grp_phen_tokens))
+
+            # attempt to extract hpo terms from tree based on root, length of phrase and key
+            try:
+                hpids = search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
+
+            except (KeyError, IndexError):
+                hpids = []
+
+            # if found any hpids, append to extracted
+            if hpids:
+                # extract span of just matching phenotype tokens
+                matched_phen_idx = [stemmed_tokens.index(x) for x in grp_phen_tokens]
+
+                if len(matched_phen_idx) == 1:
+                    matched_string = tokens[matched_phen_idx[0]]
+                    start = tokens[matched_phen_idx[0]].idx
+                    end = start + len(tokens[matched_phen_idx[0]])
+
+                else:
+                    matched_string = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1]
+                    start = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].start_char
+                    end = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].end_char
+
+                if min(matched_phen_idx) < self.context_window:
+                    context_start = 0
+                else:
+                    context_start = min(matched_phen_idx) - self.context_window
+
+                if max(matched_phen_idx) + self.context_window >= len(tokens) - 1:
+                    context_end = len(tokens)
+
+                else:
+                    context_end = max(matched_phen_idx) + self.context_window
+
+                if context_start == context_end:
+                    context = tokens[context_start]
+
+                else:
+                    context = tokens[context_start:context_end]
+
+                found_term = dict(hpid=hpids,
+                                  index=[base_index + start, base_index + end],
+                                  matched=matched_string.text,
+                                  context=context.text
+                                  )
+
+                if found_term not in extracted_terms:
+                    extracted_terms.append(found_term)
+
+        return extracted_terms
 
 
 def group_sequence(lst):
@@ -131,184 +314,12 @@ def permute_leave_one_out(original_list, min_terms=1):
     return permuted_list
 
 
-def find_hpo_terms(phen_groups, stemmed_tokens, tokens, base_index, context_window, search_tree):
-    """Match hpo terms from stemmed tree to indexed groups in text"""
-    extracted_terms = []
-    for phen_group in phen_groups:
-        # if there is only one phenotype in a group
-        if len(phen_group) == 1:
-            grp_phen_tokens = stemmed_tokens[phen_group[0]]
-
-        # if multiple phenotypes, get all words between
-        else:
-            grp_phen_tokens = " ".join(stemmed_tokens[min(phen_group):max(phen_group) + 1])
-
-        # remove stop words and punctuation from group of phenotypes
-        grp_phen_tokens = nlp(grp_phen_tokens)
-        grp_phen_tokens = [x.text for x in grp_phen_tokens if not x.is_stop and not x.is_punct]
-
-        # sort to match same order as used in making keys for search tree
-        try_term_key = ' '.join(sorted(grp_phen_tokens))
-
-        # attempt to extract hpo terms from tree based on root, length of phrase and key
-        try:
-            hpids = search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
-
-        except (KeyError, IndexError):
-            hpids = []
-
-        # if found any hpids, append to extracted
-        if hpids:
-            # extract span of just matching phenotype tokens
-            matched_phen_idx = [stemmed_tokens.index(x) for x in grp_phen_tokens]
-
-            if len(matched_phen_idx) == 1:
-                matched_string = tokens[matched_phen_idx[0]]
-                start = tokens[matched_phen_idx[0]].idx
-                end = start + len(tokens[matched_phen_idx[0]])
-
-            else:
-                matched_string = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1]
-                start = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].start_char
-                end = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].end_char
-
-            if min(matched_phen_idx) < context_window:
-                context_start = 0
-            else:
-                context_start = min(matched_phen_idx) - context_window
-
-            if max(matched_phen_idx) + context_window >= len(tokens)-1:
-                context_end = len(tokens)
-
-            else:
-                context_end = max(matched_phen_idx) + context_window
-
-            if context_start == context_end:
-                context = tokens[context_start]
-
-            else:
-                context = tokens[context_start:context_end]
-
-            found_term = dict(hpid=hpids,
-                              index=[base_index + start, base_index + end],
-                              matched=matched_string.text,
-                              context=context.text
-                              )
-
-            if found_term not in extracted_terms:
-                extracted_terms.append(found_term)
-
-    return extracted_terms
 
 
-def conflict_resolver(extracted_terms, model):
-    """
-    Pick most likely HPO ID based on context
-    :param extracted_terms: list of dictionaries identified by extract_hpo_terms
-    :return: list of dictionaries with resolved conflicts
-    """
-
-    if not model:
-        logger.critical("Doc2vec model does not exist or could not be loaded")
-        return extracted_terms
-
-    resolved_terms = []
-
-    for entry in extracted_terms:
-        similarity_scores = []
-        if len(entry['hpid']) > 1:
-            for term in entry['hpid']:
-                similarity_scores.append(similarity_term_to_context(term, entry['context'], model))
-
-            # reduce matches until only one term left
-            for i in range(len(similarity_scores)-1):
-                idx_least_likely_term = similarity_scores.index(min(similarity_scores))
-                least_likely_term = entry['hpid'][idx_least_likely_term]
-                entry['hpid'].remove(least_likely_term)
-
-        resolved_terms.append(entry)
-    return resolved_terms
 
 
-def hpo(text,
-        correct_spelling=True,
-        max_neighbors=3,
-        max_length=1000000,
-        context_window=8,
-        resolve_conflicts=True,
-        return_context=False,
-        search_tree=search_tree,
-        custom_synonyms=None,
-        model=context_model
-        ):
-    """
-    extracts hpo terms from text
-    :param text: text of type string
-    :param correct_spelling: (True,False) attempt to correct spelling using spellcheck
-    :param max_neighbors: (int) max number of phenotypic groups to attempt to search for a matching phenotype
-    :param max_length: (int) max document length in characters, higher limit will require more memory
-    :param context_window: (int) dimensions of context to return number of tokens in each direction
-    :param resolve_conflicts: (True,False) loads big model
-    :param return_context: (True,False) add context fragment to json
-    :param search_tree: (dict) nested dictionary
-    :param custom_synonyms: (dict) dictionary of additional synonyms to map
-    :param model: (obj) model object
-    :return: json of hpo terms, their indices in text and matched string
-    """
-    if custom_synonyms:
-        search_tree = build_search_tree(custom_synonyms=custom_synonyms)
-    nlp.max_length = max_length
 
-    extracted_terms = []
-    if not text[0].isupper():
-        text = text.capitalize()
-    chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
-    len_last_chunk = 1
 
-    for i, chunk in enumerate(chunks):
-
-        if correct_spelling:
-            chunk = spellcheck(chunk)
-
-        tokens = nlp(chunk)
-
-        # Stem tokens
-        stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
-
-        # Index tokens which match stemmed phenotypes
-        phenotokens, phenindeces = index_tokens(stemmed_tokens, search_tree)
-
-        # Group token indices
-        groups = group_sequence(phenindeces)
-
-        # Add leave one out groups
-        groups = permute_leave_one_out(groups)
-
-        # Find and fuse adjacent phenotype groups
-        assembled_groups = assemble_groups(groups, max_distance=max_neighbors)
-
-        phen_groups = recombine_groups(assembled_groups)
-
-        # Extract hpo terms
-        extracted_terms += find_hpo_terms(tuple(phen_groups),
-                                          tuple(stemmed_tokens),
-                                          tokens,
-                                          base_index=i * len_last_chunk,
-                                          context_window=context_window,
-                                          search_tree=search_tree
-                                          )
-        len_last_chunk = len(chunk)
-
-    if extracted_terms:
-        if resolve_conflicts:
-            extracted_terms = conflict_resolver(extracted_terms, model)
-
-        if return_context is False:
-            extracted_terms = remove_key(extracted_terms, 'context')
-
-        return json.dumps(extracted_terms)
-    else:
-        return json.dumps([])
 
 
 def self_evaluation(correct_spelling=False, resolve_conflicts=False):
