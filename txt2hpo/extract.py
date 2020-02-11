@@ -28,13 +28,13 @@ class Extractor:
 
     def __init__(self, correct_spelling=True, max_neighbors=3, max_length=1000000, context_window=8,
                  resolve_conflicts=True, return_context=False, custom_synonyms=None):
-        self.correct_spelling = correct_spelling,
-        self.max_neighbors = max_neighbors,
-        self.max_length = max_length,
+        self.correct_spelling = correct_spelling
+        self.max_neighbors = max_neighbors
+        self.max_length = max_length
         self.model = load_model()
-        self.context_window = context_window,
-        self.resolve_conflicts = resolve_conflicts,
-        self.return_context = return_context,
+        self.context_window = context_window
+        self.resolve_conflicts = resolve_conflicts
+        self.return_context = return_context
         self.resolve_conflicts = resolve_conflicts
         if custom_synonyms:
             self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
@@ -67,7 +67,7 @@ class Extractor:
             stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
 
             # Index tokens which match stemmed phenotypes
-            phenotokens, phenindeces = index_tokens(stemmed_tokens, search_tree)
+            phenotokens, phenindeces = self.index_tokens(stemmed_tokens)
 
             # Group token indices
             groups = group_sequence(phenindeces)
@@ -116,7 +116,7 @@ class Extractor:
             similarity_scores = []
             if len(entry['hpid']) > 1:
                 for term in entry['hpid']:
-                    similarity_scores.append(similarity_term_to_context(term, entry['context'], model))
+                    similarity_scores.append(similarity_term_to_context(term, entry['context'], self.model))
 
                 # reduce matches until only one term left
                 for i in range(len(similarity_scores) - 1):
@@ -148,7 +148,7 @@ class Extractor:
 
             # attempt to extract hpo terms from tree based on root, length of phrase and key
             try:
-                hpids = search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
+                hpids = self.search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
 
             except (KeyError, IndexError):
                 hpids = []
@@ -196,6 +196,17 @@ class Extractor:
 
         return extracted_terms
 
+    def index_tokens(self, stemmed_tokens):
+        """index phenotype tokens by matching each stem against root of search tree"""
+        phenotokens = []
+        phenindices = []
+        for i, token in enumerate(stemmed_tokens):
+            if token in self.search_tree:
+                phenotokens.append(token)
+                phenindices.append(i)
+
+        return phenotokens, phenindices
+
 
 def group_sequence(lst):
     """
@@ -213,19 +224,6 @@ def group_sequence(lst):
         else:
             grouped.append([lst[i]])
     return grouped
-
-
-def index_tokens(stemmed_tokens, search_tree):
-    """index phenotype tokens by matching each stem against root of search tree"""
-    phenotokens = []
-    phenindeces = []
-
-    for i, token in enumerate(stemmed_tokens):
-        if token in search_tree:
-            phenotokens.append(token)
-            phenindeces.append(i)
-
-    return phenotokens, phenindeces
 
 
 def assemble_groups(original, max_distance=2, min_compl=0.20):
@@ -312,14 +310,6 @@ def permute_leave_one_out(original_list, min_terms=1):
             if permuted_group not in permuted_list:
                 permuted_list.append(permuted_group)
     return permuted_list
-
-
-
-
-
-
-
-
 
 
 def self_evaluation(correct_spelling=False, resolve_conflicts=False):
