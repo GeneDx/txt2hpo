@@ -321,12 +321,12 @@ def self_evaluation(correct_spelling=False, resolve_conflicts=False):
     logger.info('Running self evaluation, this may take a few minutes \n')
     i = 0
     n_nodes = len(hpo_network.nodes)
-
+    hpo = Extractor(correct_spelling=correct_spelling,resolve_conflicts=resolve_conflicts).hpo
     for node in hpo_network:
         total += 1
         term = hpo_network.nodes[node]['name']
         hpids = []
-        extracted = hpo(term, correct_spelling=correct_spelling, resolve_conflicts=resolve_conflicts)
+        extracted = hpo(term)
         if extracted:
             extracted = json.loads(extracted)
 
