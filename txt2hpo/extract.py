@@ -133,26 +133,27 @@ class Extractor(object):
     def find_hpo_terms(self, phen_groups, stemmed_tokens, tokens, base_index):
         """Match hpo terms from stemmed tree to indexed groups in text"""
         extracted_terms = []
+
+        # remove stop words and punctuation from group of phenotypes
+        stop_punct_mask = [x.i for x in tokens if x.is_stop or x.is_punct]
+
         for phen_group in phen_groups:
             # if there is only one phenotype in a group
             if len(phen_group) == 1:
-                grp_phen_tokens = stemmed_tokens[phen_group[0]]
+                grp_phen_string = stemmed_tokens[phen_group[0]]
+                grp_phen_list = [grp_phen_string]
 
             # if multiple phenotypes, get all words between
             else:
-                grp_phen_tokens = " ".join(stemmed_tokens[min(phen_group):max(phen_group) + 1])
-
-            # remove stop words and punctuation from group of phenotypes
-            grp_phen_tokens = nlp(grp_phen_tokens)
-            grp_phen_tokens = [x.text for x in grp_phen_tokens if not x.is_stop and not x.is_punct]
-
+                grp_phen_string = stemmed_tokens[min(phen_group):max(phen_group) + 1]
+                grp_phen_list = [x for x in grp_phen_string if stemmed_tokens.index(x) not in stop_punct_mask]
             # sort to match same order as used in making keys for search tree
-            try_term_key = ' '.join(sorted(grp_phen_tokens))
+            try_term_key = ' '.join(sorted(grp_phen_list))
 
             # attempt to extract hpo terms from tree based on root, length of phrase and key
             try:
                 # copy matching hpids, because we may need to delete conflicting terms without affecting this obj
-                hpids = self.search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key].copy()
+                hpids = self.search_tree[grp_phen_list[0]][len(grp_phen_list)][try_term_key].copy()
 
             except (KeyError, IndexError):
                 hpids = []
@@ -160,28 +161,30 @@ class Extractor(object):
             # if found any hpids, append to extracted
             if hpids:
                 # extract span of just matching phenotype tokens
-                matched_phen_idx = [stemmed_tokens.index(x) for x in grp_phen_tokens]
+                matching_tokens_index = [x.i for x in tokens if x.i in phen_group]
 
-                if len(matched_phen_idx) == 1:
-                    matched_string = tokens[matched_phen_idx[0]]
-                    start = tokens[matched_phen_idx[0]].idx
-                    end = start + len(tokens[matched_phen_idx[0]])
+                if len(matching_tokens_index) == 1:
+                    matched_tokens = tokens[matching_tokens_index[0]]
+                    matched_string = matched_tokens.text
+                    start = matched_tokens.idx
+                    end = start + len(matched_string)
 
                 else:
-                    matched_string = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1]
-                    start = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].start_char
-                    end = tokens[min(matched_phen_idx):max(matched_phen_idx) + 1].end_char
+                    matched_tokens = tokens[min(matching_tokens_index):max(matching_tokens_index) + 1]
+                    matched_string = matched_tokens.text
+                    start = matched_tokens.start_char
+                    end = matched_tokens.end_char
 
-                if min(matched_phen_idx) < self.context_window:
+                if min(matching_tokens_index) < self.context_window:
                     context_start = 0
                 else:
-                    context_start = min(matched_phen_idx) - self.context_window
+                    context_start = min(matching_tokens_index) - self.context_window
 
-                if max(matched_phen_idx) + self.context_window >= len(tokens) - 1:
+                if max(matching_tokens_index) + self.context_window >= len(tokens) - 1:
                     context_end = len(tokens)
 
                 else:
-                    context_end = max(matched_phen_idx) + self.context_window
+                    context_end = max(matching_tokens_index) + self.context_window
 
                 if context_start == context_end:
                     context = tokens[context_start]
@@ -191,7 +194,7 @@ class Extractor(object):
 
                 found_term = dict(hpid=hpids,
                                   index=[base_index + start, base_index + end],
-                                  matched=matched_string.text,
+                                  matched=matched_string,
                                   context=context.text
                                   )
 

@@ -155,17 +155,17 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
         hpo = Extractor(max_neighbors=2).hpo
-        self.assertEqual(len(json.loads(hpo(test_case11_text))), 9)
+        self.assertEqual(len(json.loads(hpo(test_case11_text))), 10)
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
         hpo = Extractor(max_neighbors=2, correct_spelling=False).hpo
-        self.assertEqual(len(json.loads(hpo(test_case11_text))), 9)
+        self.assertEqual(len(json.loads(hpo(test_case11_text))), 10)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
         hpo = Extractor(max_neighbors=3, correct_spelling=False).hpo
-        self.assertEqual(len(json.loads(hpo(test_case11_text))), 10)
+        self.assertEqual(len(json.loads(hpo(test_case11_text))), 11)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
@@ -323,3 +323,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(ex.resolve_conflicts, True)
         res = json.loads(ex.hpo("ASD"))
         self.assertEqual(len(res[0]['hpid']), 1)
+
+    def test_extract_from_repeated_context(self):
+        hpo = Extractor().hpo
+        truth = json.dumps([{"hpid": ["HP:0000154"], "index": [16, 26], "matched": "wide mouth"}])
+        resp = hpo("Wide gait and a wide mouth")
+        self.assertEqual(truth, resp)
+
