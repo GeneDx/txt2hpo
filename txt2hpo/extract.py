@@ -12,7 +12,7 @@ from txt2hpo.build_tree import search_tree, build_search_tree
 from txt2hpo.util import remove_key
 
 
-class Extractor:
+class Extractor(object):
 
     """ Converts text to HPO annotated JSON object
 
@@ -33,7 +33,6 @@ class Extractor:
         self.max_length = max_length
         self.model = load_model()
         self.context_window = context_window
-        self.resolve_conflicts = resolve_conflicts
         self.return_context = return_context
         self.resolve_conflicts = resolve_conflicts
         if custom_synonyms:
