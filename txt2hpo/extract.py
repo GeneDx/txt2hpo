@@ -26,15 +26,15 @@ class Extractor(object):
         custom_synonyms: (dict) dictionary of additional synonyms to map
     """
 
-    def __init__(self, correct_spelling=True, max_neighbors=3, max_length=1000000, context_window=8,
-                 resolve_conflicts=True, return_context=False, custom_synonyms=None):
+    def __init__(self, correct_spelling=True, resolve_conflicts=True, max_neighbors=3, max_length=1000000,
+                 context_window=8, return_context=False, custom_synonyms=None):
         self.correct_spelling = correct_spelling
+        self.resolve_conflicts = resolve_conflicts
         self.max_neighbors = max_neighbors
         self.max_length = max_length
         self.model = load_model()
         self.context_window = context_window
         self.return_context = return_context
-        self.resolve_conflicts = resolve_conflicts
         if custom_synonyms:
             self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
         else:
@@ -88,11 +88,15 @@ class Extractor(object):
             len_last_chunk = len(chunk)
 
         if extracted_terms:
-            if self.resolve_conflicts:
+            if self.resolve_conflicts is True:
                 extracted_terms = self.conflict_resolver(extracted_terms)
+            else:
+                pass
 
             if self.return_context is False:
                 extracted_terms = remove_key(extracted_terms, 'context')
+            else:
+                pass
 
             return json.dumps(extracted_terms)
         else:
@@ -147,7 +151,8 @@ class Extractor(object):
 
             # attempt to extract hpo terms from tree based on root, length of phrase and key
             try:
-                hpids = self.search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key]
+                # copy matching hpids, because we may need to delete conflicting terms without affecting this obj
+                hpids = self.search_tree[grp_phen_tokens[0]][len(grp_phen_tokens)][try_term_key].copy()
 
             except (KeyError, IndexError):
                 hpids = []

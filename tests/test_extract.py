@@ -200,11 +200,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
             result = json.loads(hpo(sentence))
             self.assertNotEqual(len(result), 0)
 
-        sentences = ['Developmental delay', 'Hyptonia']
+        sentences = ['Developmental delay', 'Hypotonia']
         for sentence in sentences:
             result = json.loads(hpo(sentence))
             self.assertNotEqual(len(result), 0)
-        sentences = ['Hyptonia', 'Developmental delay']
+        sentences = ['Hypotonia', 'Developmental delay']
 
         for sentence in sentences:
             result = json.loads(hpo(sentence))
@@ -302,3 +302,20 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_extract_ambiguous(self):
         hpo = Extractor(resolve_conflicts=True).hpo
         print(hpo("secundum, all underwent surgical repair for ASD except for 1 individual whose defect spontaneously closed"))
+
+
+    def test_conflict_instantiate(self):
+        ex = Extractor(resolve_conflicts=True)
+        self.assertEqual(ex.resolve_conflicts, True)
+        res = json.loads(ex.hpo("ASD"))
+        self.assertEqual(len(res[0]['hpid']), 1)
+
+        ex = Extractor(resolve_conflicts=False)
+        self.assertEqual(ex.resolve_conflicts, False)
+        res = json.loads(ex.hpo("ASD"))
+        self.assertEqual(len(res[0]['hpid']), 2)
+
+        ex = Extractor(resolve_conflicts=True)
+        self.assertEqual(ex.resolve_conflicts, True)
+        res = json.loads(ex.hpo("ASD"))
+        self.assertEqual(len(res[0]['hpid']), 1)
