@@ -292,6 +292,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(truth, conflict_resolver(extracted))
 
     def test_custom_synonyms(self):
+        # test adding custom synonyms
         custom_syn = {"HP:0001263": ['DD', 'GDD']}
 
         hpo = Extractor(custom_synonyms=custom_syn).hpo
@@ -300,13 +301,14 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(hpo("GDD DD"), truth)
 
     def test_extract_ambiguous(self):
+        # test resolver works
         hpo = Extractor(resolve_conflicts=True).hpo
         truth = json.dumps([{"hpid": ["HP:0001631"], "index": [44, 47], "matched": "asd"}])
         test1 = hpo("secundum, all underwent surgical repair for ASD except for 1 individual whose defect spontaneously closed")
         self.assertEqual(truth, test1)
 
-
     def test_conflict_instantiate(self):
+        # Test that reinstantiation does not affect results
         ex = Extractor(resolve_conflicts=True)
         self.assertEqual(ex.resolve_conflicts, True)
         res = json.loads(ex.hpo("ASD"))
