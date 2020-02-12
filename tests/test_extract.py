@@ -301,7 +301,9 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_extract_ambiguous(self):
         hpo = Extractor(resolve_conflicts=True).hpo
-        print(hpo("secundum, all underwent surgical repair for ASD except for 1 individual whose defect spontaneously closed"))
+        truth = json.dumps([{"hpid": ["HP:0001631"], "index": [44, 47], "matched": "asd"}])
+        test1 = hpo("secundum, all underwent surgical repair for ASD except for 1 individual whose defect spontaneously closed")
+        self.assertEqual(truth, test1)
 
 
     def test_conflict_instantiate(self):
