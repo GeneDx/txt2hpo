@@ -293,7 +293,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_custom_synonyms(self):
         # test adding custom synonyms
-        custom_syn = {"HP:0001263": ['DD', 'GDD']}
+        custom_syn = {"HP:0001263": ['DD', 'GDD'], "HP:0000729": ['ASD', 'PDD']}
 
         hpo = Extractor(custom_synonyms=custom_syn).hpo
         truth = json.dumps([{"hpid": ["HP:0001263"], "index": [0, 3], "matched": "GDD"},
@@ -329,4 +329,5 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         truth = json.dumps([{"hpid": ["HP:0000154"], "index": [16, 26], "matched": "wide mouth"}])
         resp = hpo("Wide gait and a wide mouth")
         self.assertEqual(truth, resp)
+
 
