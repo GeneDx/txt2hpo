@@ -1,7 +1,6 @@
 import unittest
-import json
 import time
-
+import json
 from txt2hpo.extract import Extractor, Data, group_sequence
 from txt2hpo.data import load_model
 from tests.test_cases import *
@@ -327,4 +326,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = hpo("Wide gait and a wide mouth")
         self.assertEqual(truth, resp.entries_sans_context)
 
-
+    def test_extract_json_property(self):
+        hpo = Extractor().hpo
+        truth = json.dumps([{"hpid": ["HP:0000154"],
+                             "index": [16, 26],
+                             "matched": "wide mouth",
+                             "context": "Wide gait and a wide mouth"}])
+        resp = hpo("Wide gait and a wide mouth")
+        self.assertEqual(truth, resp.json)
