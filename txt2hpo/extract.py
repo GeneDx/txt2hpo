@@ -12,7 +12,65 @@ from txt2hpo.build_tree import search_tree, build_search_tree
 from txt2hpo.util import remove_key
 
 
-class Extractor(object):
+class Data(object):
+    def __init__(self, entries=None, model=None):
+        if not entries:
+            self.entries = []
+        else:
+            self.entries = entries
+        self.model = model
+
+    def add(self,entry):
+        self.entries += entry
+
+    def resolve_conflicts(self):
+        """
+        Pick most likely HPO ID based on context
+        :param extracted_terms: list of dictionaries identified by extract_hpo_terms
+        :return: list of dictionaries with resolved conflicts
+        """
+
+        if not self.model:
+            logger.critical("Doc2vec model does not exist or could not be loaded")
+
+        resolved_terms = []
+        for entry in self.entries:
+            similarity_scores = []
+            if len(entry['hpid']) > 1:
+                for term in entry['hpid']:
+                    similarity_scores.append(similarity_term_to_context(term, entry['context'], self.model))
+
+                # reduce matches until only one term left
+                for i in range(len(similarity_scores) - 1):
+                    idx_least_likely_term = similarity_scores.index(min(similarity_scores))
+                    least_likely_term = entry['hpid'][idx_least_likely_term]
+                    entry['hpid'].remove(least_likely_term)
+
+            resolved_terms.append(entry)
+        self.entries = resolved_terms
+
+    @property
+    def hpids(self):
+        return [x['hpid'] for x in self.entries]
+
+    @property
+    def json(self):
+        return json.dumps(self.entries)
+
+    @property
+    def contents(self):
+        return self.entries
+
+    @property
+    def entries_sans_context(self):
+        return remove_key(self.entries, 'context')
+
+    @property
+    def n_entries(self):
+        return len(self.entries)
+
+
+class Extractor:
 
     """ Converts text to HPO annotated JSON object
 
@@ -22,34 +80,35 @@ class Extractor(object):
         max_length: (int) max document length in characters, higher limit will require more memory
         context_window: (int) dimensions of context to return number of tokens in each direction
         resolve_conflicts: (True,False) loads big model
-        return_context: (True,False) add context fragment to json
         custom_synonyms: (dict) dictionary of additional synonyms to map
+
     """
 
     def __init__(self, correct_spelling=True, resolve_conflicts=True, max_neighbors=3, max_length=1000000,
-                 context_window=8, return_context=False, custom_synonyms=None):
+                 context_window=8, model=None, custom_synonyms=None):
         self.correct_spelling = correct_spelling
         self.resolve_conflicts = resolve_conflicts
+
         self.max_neighbors = max_neighbors
         self.max_length = max_length
-        self.model = load_model()
         self.context_window = context_window
-        self.return_context = return_context
         if custom_synonyms:
             self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
         else:
             self.search_tree = search_tree
+        if model is None:
+            self.model = load_model()
 
     def hpo(self, text):
         """
         extracts hpo terms from text
         :param text: text of type string
-        :return: json of hpo terms, their indices in text and matched string
+        :return: Data object
         """
 
         nlp.max_length = self.max_length
 
-        extracted_terms = []
+        extracted_terms = Data(model=self.model)
         if not text[0].isupper():
             text = text.capitalize()
         chunks = [text[i:i + self.max_length] for i in range(0, len(text), self.max_length)]
@@ -80,55 +139,20 @@ class Extractor(object):
             phen_groups = recombine_groups(assembled_groups)
 
             # Extract hpo terms
-            extracted_terms += self.find_hpo_terms(tuple(phen_groups),
+            extracted_terms.add(self.find_hpo_terms(tuple(phen_groups),
                                               tuple(stemmed_tokens),
                                               tokens,
                                               base_index=i * len_last_chunk,
-                                              )
+                                              ))
             len_last_chunk = len(chunk)
 
         if extracted_terms:
             if self.resolve_conflicts is True:
-                extracted_terms = self.conflict_resolver(extracted_terms)
+                extracted_terms.resolve_conflicts()
             else:
                 pass
 
-            if self.return_context is False:
-                extracted_terms = remove_key(extracted_terms, 'context')
-            else:
-                pass
-
-            return json.dumps(extracted_terms)
-        else:
-            return json.dumps([])
-
-    def conflict_resolver(self, extracted_terms):
-        """
-        Pick most likely HPO ID based on context
-        :param extracted_terms: list of dictionaries identified by extract_hpo_terms
-        :return: list of dictionaries with resolved conflicts
-        """
-
-        if not self.model:
-            logger.critical("Doc2vec model does not exist or could not be loaded")
-            return extracted_terms
-
-        resolved_terms = []
-
-        for entry in extracted_terms:
-            similarity_scores = []
-            if len(entry['hpid']) > 1:
-                for term in entry['hpid']:
-                    similarity_scores.append(similarity_term_to_context(term, entry['context'], self.model))
-
-                # reduce matches until only one term left
-                for i in range(len(similarity_scores) - 1):
-                    idx_least_likely_term = similarity_scores.index(min(similarity_scores))
-                    least_likely_term = entry['hpid'][idx_least_likely_term]
-                    entry['hpid'].remove(least_likely_term)
-
-            resolved_terms.append(entry)
-        return resolved_terms
+        return extracted_terms
 
     def find_hpo_terms(self, phen_groups, stemmed_tokens, tokens, base_index):
         """Match hpo terms from stemmed tree to indexed groups in text"""
