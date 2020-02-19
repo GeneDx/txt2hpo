@@ -15,13 +15,13 @@ try:
     Token.set_extension('negex', default=False, force=True)
 
 except OSError as e:
+    nlp = None
     logger.info('negation model could not be loaded\n')
 
 try:
     nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
-except:
-
+except OSError as e:
     logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
     from spacy.cli import download
     download('en')
