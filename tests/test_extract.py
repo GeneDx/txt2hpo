@@ -318,7 +318,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor()
         resp = extract.hpo("developmental delay and a wide mouth")
         resp.detect_negation()
-        self.assertEqual(['HP:0001263', 'HP:0000154'], resp.hpids)
+        self.assertEqual(set(['HP:0000154', 'HP:0001263']), set(resp.hpids))
 
         resp = extract.hpo("developmental delay with no wide mouth")
         resp.detect_negation()
