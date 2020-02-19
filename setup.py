@@ -27,8 +27,13 @@ name=__project__,
         'pandas',
         'nltk',
         'spacy',
+        'scispacy',
+        'negspacy',
         'networkx',
-        'gensim'
+        'gensim',
+        'en_core_sci_sm'
 
-    ]
+
+    ],
+    dependency_links=['https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.2.4/en_core_sci_sm-0.2.4.tar.gz#egg=en_core_sci_sm']
 )

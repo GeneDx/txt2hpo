@@ -3,7 +3,7 @@ import pickle
 import sys
 from txt2hpo.config import logger, config
 from txt2hpo.util import hpo_network
-from txt2hpo.nlp import nlp
+from txt2hpo.nlp import nlp_sans_ner
 from txt2hpo.nlp import st
 
 
@@ -46,7 +46,7 @@ def build_search_tree(custom_synonyms={}):
 
         for name in extended_names:
 
-            tokens = nlp(name)
+            tokens = nlp_sans_ner(name)
             tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens if not x.is_stop and not x.is_punct]
             for token in tokens:
                 if token not in terms:

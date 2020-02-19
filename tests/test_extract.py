@@ -23,80 +23,69 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor(correct_spelling=False)
 
         # Test extracting single phenotype
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonia", "context": "Hypotonia"}]
-        self.assertEqual(extract.hpo("Hypotonia").entries, truth)
+        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonia"}]
+        self.assertEqual(extract.hpo("Hypotonia").entries_sans_context, truth)
 
         # Test adding non phenotypic term
-        truth = [{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia", "context": "Word hypotonia"}]
-        self.assertEqual(extract.hpo("Word hypotonia").entries, truth)
+        truth = [{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia"}]
+        self.assertEqual(extract.hpo("Word hypotonia").entries_sans_context, truth)
 
         # Test handling punctuation
-        truth = [{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia", "context": "Word, hypotonia"}]
-        self.assertEqual(extract.hpo("Word, hypotonia").entries, truth)
+        truth = [{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia"}]
+        self.assertEqual(extract.hpo("Word, hypotonia").entries_sans_context, truth)
 
         # Test extracting a multiword phenotype
         truth = [{"hpid": ["HP:0001263"],
-                             "index": [0, 19], "matched": "Developmental delay",
-                             "context": "Developmental delay"}]
-        self.assertEqual(extract.hpo("Developmental delay").entries, truth)
+                             "index": [0, 19], "matched": "Developmental delay"}]
+        self.assertEqual(extract.hpo("Developmental delay").entries_sans_context, truth)
 
         # Test extracting a multiword phenotype with reversed word order
         truth = [{"hpid": ["HP:0001263"], "index": [0, 19],
-                             "matched": "Delay developmental",
-                             "context": "Delay developmental"}]
+                             "matched": "Delay developmental"}]
 
-        self.assertEqual(extract.hpo("Delay developmental").entries, truth)
+        self.assertEqual(extract.hpo("Delay developmental").entries_sans_context, truth)
 
         # Test extracting a phenotype with inflectional endings
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonic", "context": "Hypotonic"}]
-        self.assertEqual(extract.hpo("Hypotonic").entries, truth)
+        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonic"}]
+        self.assertEqual(extract.hpo("Hypotonic").entries_sans_context, truth)
 
         # Test extracting a multiword phenotype with inflectional endings and reversed order
-        truth = [{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "Delayed development",
-                             "context": "Delayed development"}]
-        self.assertEqual(extract.hpo("Delayed development").entries, truth)
+        truth = [{"hpid": ["HP:0001263"], "index": [0, 19], "matched": "Delayed development"}]
+        self.assertEqual(extract.hpo("Delayed development").entries_sans_context, truth)
 
         # Test extracting multiword phenotype following an unrelated phenotypic term
-        truth = [{"hpid": ["HP:0000365"], "index": [6, 18],
-                             "matched": "hearing loss", "context":"Delay hearing loss"}]
-        self.assertEqual(extract.hpo("Delay hearing loss").entries, truth)
+        truth = [{"hpid": ["HP:0000365"], "index": [6, 18], "matched": "hearing loss"}]
+        self.assertEqual(extract.hpo("Delay hearing loss").entries_sans_context, truth)
 
         # Test extracting multiword phenotype preceding an unrelated phenotypic term
-        truth = [{"hpid": ["HP:0000365"], "index": [0, 12],
-                             "matched": "Hearing loss", "context":"Hearing loss following"}]
-        self.assertEqual(extract.hpo("Hearing loss following").entries, truth)
+        truth = [{"hpid": ["HP:0000365"], "index": [0, 12], "matched": "Hearing loss"}]
+        self.assertEqual(extract.hpo("Hearing loss following").entries_sans_context, truth)
 
         # Test extracting two multiword phenotype preceding interrupted by an unrelated phenotypic term
         truth = [
-                            {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay",
-                             "context": "Hearing loss following developmental delay"},
-                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "Hearing loss",
-                             "context":"Hearing loss following developmental delay"}
+                            {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay"},
+                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "Hearing loss"}
                             ]
-        self.assertEqual(extract.hpo("Hearing loss following developmental delay").entries, truth)
+        self.assertEqual(extract.hpo("Hearing loss following developmental delay").entries_sans_context, truth)
 
         # Test spellchecker
         extract = Extractor(correct_spelling=True)
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic",
-                             "context":"hypotonic"}]
+        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic"}]
 
-        self.assertEqual(extract.hpo("hyptonic").entries, truth)
+        self.assertEqual(extract.hpo("hyptonic").entries_sans_context, truth)
 
         truth = []
         extract = Extractor(correct_spelling=False)
-        self.assertEqual(extract.hpo("hyptonic").entries, truth)
+        self.assertEqual(extract.hpo("hyptonic").entries_sans_context, truth)
 
-        truth = [{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia",
-                             "context":"Female with multiple fractures and osteopenia NA NA"},
-                        {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures",
-                         "context": "Female with multiple fractures and osteopenia NA NA"}]
+        truth = [{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia"},
+                        {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures"}]
 
-        self.assertEqual(truth, extract.hpo("Female with multiple fractures and osteopenia NA NA").entries)
+        self.assertEqual(truth, extract.hpo("Female with multiple fractures and osteopenia NA NA").entries_sans_context)
 
-        truth = [{"hpid": ["HP:0001156"], "index": [30, 43], "matched": "brachydactyly",
-                             "context": "Female with fourth metacarpal brachydactyly"}]
+        truth = [{"hpid": ["HP:0001156"], "index": [30, 43], "matched": "brachydactyly"}]
 
-        self.assertEqual(truth, extract.hpo("Female with fourth metacarpal brachydactyly").entries)
+        self.assertEqual(truth, extract.hpo("Female with fourth metacarpal brachydactyly").entries_sans_context)
 
         extract = Extractor(correct_spelling=False)
         truth = [{"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
@@ -105,32 +94,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                             {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}]
 
         self.assertEqual(truth, extract.hpo("Male with eczema, skin rash, and sparse hair").entries_sans_context)
-
-        # Test extracting multiple phenotypes with max_neighbors
-        extract = Extractor(correct_spelling=True, max_neighbors=3)
-        truth = [{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay",
-                             "context": "developmental and delay"}]
-        self.assertEqual(extract.hpo("developmental and delay").entries, truth)
-
-        extract = Extractor(correct_spelling=True, max_neighbors=1)
-        truth = []
-        self.assertEqual(extract.hpo("developmental and delay").entries, truth)
-
-        extract = Extractor(correct_spelling=False)
-
-        # Test extracting single phenotype followed by multiword phenotype
-        truth = [
-                 {"hpid": ["HP:0000750"], "index": [0, 12], "matched": "Speech delay"},
-                 {"hpid": ["HP:0100710"], "index": [17, 26], "matched": "impulsive"}
-        ]
-        self.assertEqual(extract.hpo("Speech delay and impulsive").entries_sans_context, truth)
-
-        # Test extracting multiword phenotype followed by single phenotype
-        truth = [
-                 {"hpid": ["HP:0100710"], "index": [0, 9], "matched": "Impulsive"},
-                 {"hpid": ["HP:0000750"], "index": [14, 26], "matched": "speech delay"}
-                 ]
-        self.assertEqual(extract.hpo("Impulsive and speech delay").entries_sans_context, truth)
 
         # Test extracting an abbreviated phenotype
         truth = [{"hpid": ["HP:0001370"], "index": [0, 2], "matched": "RA"}]
@@ -150,20 +113,46 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         ]
         self.assertEqual(extract.hpo("Developmental delay, hypotonia").entries_sans_context, truth)
 
+    def test_stop_word_phenos(self):
+        # Test extracting multiple phenotypes with max_neighbors
+        extract = Extractor(correct_spelling=True, max_neighbors=3)
+        truth = [{"hpid": ["HP:0001263"], "index": [0, 23], "matched": "developmental and delay"}]
+        self.assertEqual(extract.hpo("developmental and delay").entries_sans_context, truth)
+
+        extract = Extractor(correct_spelling=True, max_neighbors=1)
+        truth = []
+        self.assertEqual(extract.hpo("developmental and delay").entries_sans_context, truth)
+
+        extract = Extractor(correct_spelling=False)
+
+        # Test extracting single phenotype followed by multiword phenotype
+        truth = [
+                 {"hpid": ["HP:0000750"], "index": [0, 12], "matched": "Speech delay"},
+                 {"hpid": ["HP:0100710"], "index": [17, 26], "matched": "impulsive"}
+        ]
+        self.assertEqual(extract.hpo("Speech delay and impulsive").entries_sans_context, truth)
+
+        # Test extracting multiword phenotype followed by single phenotype
+        truth = [
+                 {"hpid": ["HP:0100710"], "index": [0, 9], "matched": "Impulsive"},
+                 {"hpid": ["HP:0000750"], "index": [14, 26], "matched": "speech delay"}
+                 ]
+        self.assertEqual(extract.hpo("Impulsive and speech delay").entries_sans_context, truth)
+
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
         extract = Extractor(max_neighbors=2)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 10)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 9)
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
         extract = Extractor(max_neighbors=2, correct_spelling=False)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 10)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 9)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
         extract = Extractor(max_neighbors=3, correct_spelling=False)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 11)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 10)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
@@ -207,12 +196,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
                     "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
         truth = [{"hpid": ["HP:0000729"],
                   "index": [50, 53],
-                  "matched": "ASD",
-                  "context": "the sample, 14,16 children were diagnosed with ASD, of whom 5689 had neurological and"}]
+                  "matched": "ASD"}]
 
         data = Data(entries=extracted, model=model)
         data.resolve_conflicts()
-        self.assertEqual(truth, data.entries)
+        self.assertEqual(truth, data.entries_sans_context)
 
         extracted = [{"hpid": ["HP:0000729", "HP:0001631"],
                   "index": [44, 47],
@@ -222,13 +210,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         truth = [{"hpid": ["HP:0001631"],
                   "index": [44, 47],
-                  "matched": "ASD",
-                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
-                  whose defect spontaneously closed"}]
+                  "matched": "ASD"}]
 
         data = Data(entries=extracted, model=model)
         data.resolve_conflicts()
-        self.assertEqual(truth, data.entries)
+        self.assertEqual(truth, data.entries_sans_context)
 
         # Test conflict resolution if terms have identical context similarity scores
 
@@ -241,13 +227,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         # Expected result remove only one term
         truth = [{"hpid": ["HP:0001631"],
                   "index": [44, 47],
-                  "matched": "ASD",
-                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
-                          whose defect spontaneously closed"}]
+                  "matched": "ASD"}]
 
         data = Data(entries=extracted, model=model)
         data.resolve_conflicts()
-        self.assertEqual(truth, data.entries)
+        self.assertEqual(truth, data.entries_sans_context)
 
         # Test conflict resolution if terms have identical context similarity scores
 
@@ -260,13 +244,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         # Expected result remove only one term
         truth = [{"hpid": ["HP:0001631"],
                   "index": [44, 47],
-                  "matched": "ASD",
-                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
-                                  whose defect spontaneously closed"}]
+                  "matched": "ASD"}]
 
         data = Data(entries=extracted, model=model)
         data.resolve_conflicts()
-        self.assertEqual(truth, data.entries)
+        self.assertEqual(truth, data.entries_sans_context)
 
         # Test conflict resolution if 2 of 3 terms have identical context similarity scores
 
@@ -279,13 +261,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         # Expected result remove only one term
         truth = [{"hpid": ["HP:0001631"],
                   "index": [44, 47],
-                  "matched": "ASD",
-                  "context": "secundum, all underwent surgical repair for ASD except for 1 individual \
-                                          whose defect spontaneously closed"}]
+                  "matched": "ASD"}]
 
         data = Data(entries=extracted, model=model)
         data.resolve_conflicts()
-        self.assertEqual(truth, data.entries)
+        self.assertEqual(truth, data.entries_sans_context)
 
     def test_custom_synonyms(self):
         # test adding custom synonyms
@@ -330,7 +310,36 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor()
         truth = json.dumps([{"hpid": ["HP:0000154"],
                              "index": [16, 26],
-                             "matched": "wide mouth",
-                             "context": "Wide gait and a wide mouth"}])
+                             "matched": "wide mouth"}])
         resp = extract.hpo("Wide gait and a wide mouth")
         self.assertEqual(truth, resp.json)
+
+    def test_extract_without_negated(self):
+        extract = Extractor()
+        resp = extract.hpo("developmental delay and a wide mouth")
+        resp.detect_negation()
+        self.assertEqual(['HP:0001263', 'HP:0000154'], resp.hpids)
+
+        resp = extract.hpo("developmental delay with no wide mouth")
+        resp.detect_negation()
+        resp.remove_negated()
+        self.assertEqual(['HP:0001263'], resp.hpids)
+
+        extract = Extractor(remove_negated=True)
+        resp = extract.hpo("developmental delay without a wide mouth")
+        self.assertEqual(['HP:0001263'], resp.hpids)
+
+        extract = Extractor(remove_negated=True)
+        resp = extract.hpo("no developmental delay, but has a wide mouth")
+        self.assertEqual(['HP:0000154'], resp.hpids)
+
+        extract = Extractor(remove_negated=True)
+        resp = extract.hpo("the patient has a wide mouth but no developmental delay.")
+        self.assertEqual(['HP:0000154'], resp.hpids)
+
+        extract = Extractor(remove_negated=True)
+        resp = extract.hpo("the patient does not have either a wide mouth or developmental delay.")
+        self.assertEqual([], resp.hpids)
+
+
+
