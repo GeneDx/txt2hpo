@@ -1,11 +1,12 @@
 import json
 import numpy as np
 from itertools import combinations, chain
+import spacy
 
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
-from txt2hpo.nlp import nlp, similarity_term_to_context
+from txt2hpo.nlp import nlp, nlp_sans_ner, similarity_term_to_context
 from txt2hpo.nlp import st
 from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree, build_search_tree
@@ -23,13 +24,33 @@ class Data(object):
     def add(self,entry):
         self.entries += entry
 
+    def remove(self, item):
+        self.entries.remove(item)
+
+    def detect_negation(self):
+        for entry in self.entries:
+            entry['negated_tokens'] = ' '.join([e.text for e in nlp(entry['context']).ents if e._.negex])
+            entry['negated'] = [t.text for t in nlp_sans_ner(entry['negated_tokens'])]
+            if isinstance(entry['matched_tokens'], (spacy.tokens.doc.Doc, spacy.tokens.span.Span)):
+                entry['matched_words'] = [t.text for t in entry['matched_tokens']]
+            elif isinstance(entry['matched_tokens'], spacy.tokens.token.Token):
+                entry['matched_words'] = [entry['matched_tokens'].text]
+            else:
+                entry['matched_words'] = []
+            entry['is_negated'] = True if set(entry['negated']).intersection(set(entry['matched_words'])) else False
+
+    def remove_negated(self):
+        self.detect_negation()
+        to_remove = [entry for entry in self.entries if entry['is_negated']]
+        for element in to_remove:
+            self.remove(element)
+
     def resolve_conflicts(self):
         """
         Pick most likely HPO ID based on context
         :param extracted_terms: list of dictionaries identified by extract_hpo_terms
         :return: list of dictionaries with resolved conflicts
         """
-
         if not self.model:
             logger.critical("Doc2vec model does not exist or could not be loaded")
 
@@ -51,11 +72,14 @@ class Data(object):
 
     @property
     def hpids(self):
-        return [x['hpid'] for x in self.entries]
+        return list(set(np.array([x['hpid'] for x in self.entries]).flatten()))
 
     @property
     def json(self):
-        return json.dumps(self.entries)
+        result = self.entries.copy()
+        result = remove_key(result, 'context')
+        result = remove_key(result, 'matched_tokens')
+        return json.dumps(result)
 
     @property
     def contents(self):
@@ -63,7 +87,10 @@ class Data(object):
 
     @property
     def entries_sans_context(self):
-        return remove_key(self.entries, 'context')
+        result = self.entries.copy()
+        result = remove_key(result, 'context')
+        result = remove_key(result, 'matched_tokens')
+        return result
 
     @property
     def n_entries(self):
@@ -84,11 +111,11 @@ class Extractor:
 
     """
 
-    def __init__(self, correct_spelling=True, resolve_conflicts=True, max_neighbors=3, max_length=1000000,
+    def __init__(self, correct_spelling=True, resolve_conflicts=True, remove_negated=False, max_neighbors=3, max_length=1000000,
                  context_window=8, model=None, custom_synonyms=None):
         self.correct_spelling = correct_spelling
         self.resolve_conflicts = resolve_conflicts
-
+        self.remove_negated = remove_negated
         self.max_neighbors = max_neighbors
         self.max_length = max_length
         self.context_window = context_window
@@ -106,7 +133,7 @@ class Extractor:
         :return: Data object
         """
 
-        nlp.max_length = self.max_length
+        nlp_sans_ner.max_length = self.max_length
 
         extracted_terms = Data(model=self.model)
         if not text[0].isupper():
@@ -119,7 +146,7 @@ class Extractor:
             if self.correct_spelling:
                 chunk = spellcheck(chunk)
 
-            tokens = nlp(chunk)
+            tokens = nlp_sans_ner(chunk)
 
             # Stem tokens
             stemmed_tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens]
@@ -151,6 +178,8 @@ class Extractor:
                 extracted_terms.resolve_conflicts()
             else:
                 pass
+        if self.remove_negated:
+            extracted_terms.remove_negated()
 
         return extracted_terms
 
@@ -160,24 +189,35 @@ class Extractor:
 
         # remove stop words and punctuation from group of phenotypes
         stop_punct_mask = [x.i for x in tokens if x.is_stop or x.is_punct]
+        cln_phen_groups = []
+        for grp in phen_groups:
+            cand_grp = [x for x in grp if not x in stop_punct_mask]
+            if cand_grp:
+                cln_phen_groups.append(cand_grp)
 
-        for phen_group in phen_groups:
+        for phen_group in cln_phen_groups:
+
             # if there is only one phenotype in a group
             if len(phen_group) == 1:
-                grp_phen_string = stemmed_tokens[phen_group[0]]
-                grp_phen_list = [grp_phen_string]
+                phen_group_string = stemmed_tokens[phen_group[0]]
+                phen_group_strings = [phen_group_string]
 
             # if multiple phenotypes, get all words between
             else:
-                grp_phen_string = stemmed_tokens[min(phen_group):max(phen_group) + 1]
-                grp_phen_list = [x for x in grp_phen_string if stemmed_tokens.index(x) not in stop_punct_mask]
+                phen_start = min(phen_group)
+                phen_stop = max(phen_group) + 1
+                phen_group_tokens = tokens[phen_start:phen_stop]
+                phen_group_tokens_minus_trash = [x for x in phen_group_tokens if not x.is_stop or x.is_punct]
+                phen_group_tokens_minus_trash_idx = [x.i for x in phen_group_tokens_minus_trash]
+                phen_group_strings = [stemmed_tokens[x] for x in phen_group_tokens_minus_trash_idx]
+
             # sort to match same order as used in making keys for search tree
-            try_term_key = ' '.join(sorted(grp_phen_list))
+            try_term_key = ' '.join(sorted(phen_group_strings))
 
             # attempt to extract hpo terms from tree based on root, length of phrase and key
             try:
                 # copy matching hpids, because we may need to delete conflicting terms without affecting this obj
-                hpids = self.search_tree[grp_phen_list[0]][len(grp_phen_list)][try_term_key].copy()
+                hpids = self.search_tree[phen_group_strings[0]][len(phen_group_strings)][try_term_key].copy()
 
             except (KeyError, IndexError):
                 hpids = []
@@ -219,7 +259,8 @@ class Extractor:
                 found_term = dict(hpid=hpids,
                                   index=[base_index + start, base_index + end],
                                   matched=matched_string,
-                                  context=context.text
+                                  context=context.text,
+                                  matched_tokens=matched_tokens,
                                   )
 
                 if found_term not in extracted_terms:
