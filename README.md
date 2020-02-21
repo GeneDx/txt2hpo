@@ -1,6 +1,6 @@
 # txt2hpo
 `txt2hpo` is a Python library for extracting HPO-encoded phenotypes from text.
-`txt2hpo` recognizes differences in inflection (e.g. hypotonic vs. hypotonia), is able to parse complex multi-word phenotypes with differing word order (e.g. developmentally delayed vs. delayed development) and comes with a built-in medical spellchecker. 
+`txt2hpo` recognizes differences in inflection (e.g. hypotonic vs. hypotonia), handles negation and is able to parse complex multi-word phenotypes with differing word order (e.g. developmentally delayed vs. delayed development) and comes with a built-in medical spellchecker. 
 
 # Installation
 
@@ -21,38 +21,50 @@ python setup.py install
 # Library usage
 
 ```python 
-from txt2hpo.extract import hpo
+from txt2hpo.extract import Extractor
+extract = Extract()
 
-hpo_ids = hpo("patient with developmental delay and hypotonia")
+result = extract.hpo("patient with developmental delay and hypotonia")
 
-print(hpo_ids)
+print(result.hpids)
 
-[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
- {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
+
+["HP:0001290", "HP:0001263"]
     
 ```
 
-`txt2hpo` will attempt to correct spelling errors by default, at the cost of slower processing speed.
+`txt2hpo` will attempt to correct spelling errors by default, at the cost of slower processing.
 This feature can be turned off by setting the `correct_spelling` flag to `False`. 
 
 ```python 
-from txt2hpo.extract import hpo
+from txt2hpo.extract import Extractor
 
-hpo_ids = hpo("patient with devlopental delay and hyptonia", correct_spelling=True)
 
-print(hpo_ids)
+result = extract.hpo("patient with devlopental delay and hyptonia")
 
-[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
- {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
+print(result.hpids)
+
+[]
+ 
+ 
+extract = Extract(correct_spelling=False)
     
 ```
 
-`txt2hpo` outputs a valid JSON string, use`json.loads` to convert `txt2hpo` output to JSON/python list.
+`txt2hpo` outputs a valid JSON string.
 
-```python
-import json
-from txt2hpo.extract import hpo
-hpo_ids = json.loads(hpo(text_string))
+```python 
+from txt2hpo.extract import Extractor
+extract = Extractor()
+
+result = extract.hpo("patient with developmental delay and hypotonia")
+
+print(result.json)
+
+
+'[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
+{"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]'
+
+    
 ```
-
 
