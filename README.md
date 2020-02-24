@@ -22,7 +22,7 @@ python setup.py install
 
 ```python 
 from txt2hpo.extract import Extractor
-extract = Extract()
+extract = Extractor()
 
 result = extract.hpo("patient with developmental delay and hypotonia")
 
