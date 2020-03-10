@@ -142,7 +142,6 @@ class Extractor:
         len_last_chunk = 1
 
         for i, chunk in enumerate(chunks):
-
             if self.correct_spelling:
                 chunk = spellcheck(chunk)
 

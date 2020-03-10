@@ -142,21 +142,21 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
         extract = Extractor(max_neighbors=2)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 9)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 12)
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
         extract = Extractor(max_neighbors=2, correct_spelling=False)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 9)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 12)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
         extract = Extractor(max_neighbors=3, correct_spelling=False)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 10)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 13)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=2, correct_spelling=True)
+        extract = Extractor(max_neighbors=1, correct_spelling=True)
         hpo_max_2 = extract.hpo(test_case11_text).hpids
         extract = Extractor(max_neighbors=3, correct_spelling=True)
         hpo_max_3 = extract.hpo(test_case11_text).hpids
@@ -340,6 +340,24 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor(remove_negated=True)
         resp = extract.hpo("the patient does not have either a wide mouth or developmental delay.")
         self.assertEqual([], resp.hpids)
+
+
+    def test_capitalization_affecting_outcome(self):
+        extract = Extractor(correct_spelling=False)
+        resp = extract.hpo("enlarged heart")
+        self.assertEqual(resp.hpids, ['HP:0001640'])
+
+        resp = extract.hpo(" enlarged heart")
+        self.assertEqual(resp.hpids, ['HP:0001640'])
+
+        resp = extract.hpo("Enlarged heart")
+        self.assertEqual(resp.hpids, ['HP:0001640'])
+
+        resp = extract.hpo(" Enlarged heart")
+        self.assertEqual(resp.hpids, ['HP:0001640'])
+
+        resp = extract.hpo("Male with Sotos, enlarged heart")
+        self.assertEqual(resp.hpids, ['HP:0001640'])
 
 
 

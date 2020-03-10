@@ -41,7 +41,8 @@ def build_search_tree(custom_synonyms={}):
         extended_names = []
         for name in names:
 
-            extended_names.append(name)
+            extended_names.append(name.lower())
+            extended_names.append(name.capitalize())
             extended_names.append(name.replace('Abnormality', 'Disorder'))
 
         for name in extended_names:
