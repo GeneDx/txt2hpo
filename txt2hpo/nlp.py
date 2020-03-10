@@ -7,7 +7,6 @@ from nltk.stem import RegexpStemmer
 from spacy.tokens import Token
 
 try:
-
     nlp = spacy.load("en_core_sci_sm", disable=["tagger", "parser"])
     nlp.add_pipe(nlp.create_pipe('sentencizer'))
     negex = Negex(nlp, chunk_prefix=["no", "absent", "negative", "not", "none"])
@@ -38,6 +37,7 @@ for not_a_stop in remove_from_stops.split(" "):
     if nlp:
         nlp.vocab[not_a_stop].is_stop = False
         nlp.vocab[not_a_stop.capitalize()].is_stop = False
+
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)
 
