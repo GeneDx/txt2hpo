@@ -359,7 +359,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(resp.hpids, ['HP:0001640'])
 
         resp = extract.hpo("Myoclonic Seizures")
-        self.assertEqual(set(resp.hpids), set(['HP:0001250', 'HP:0002123']))
+        self.assertEqual(set(resp.hpids), set(['HP:0002123']))
 
 
 
