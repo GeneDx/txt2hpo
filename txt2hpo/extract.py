@@ -27,6 +27,11 @@ class Data(object):
     def remove(self, item):
         self.entries.remove(item)
 
+    def remove_tagged(self, tag, state=True):
+        to_remove = [entry for entry in self.entries if entry[tag] is state]
+        for element in to_remove:
+            self.remove(element)
+
     def detect_negation(self):
         for entry in self.entries:
             entry['negated_tokens'] = ' '.join([e.text for e in nlp(entry['context']).ents if e._.negex])
@@ -41,9 +46,41 @@ class Data(object):
 
     def remove_negated(self):
         self.detect_negation()
-        to_remove = [entry for entry in self.entries if entry['is_negated']]
-        for element in to_remove:
-            self.remove(element)
+        self.remove_tagged('is_negated')
+
+
+    def remove_overlapping(self):
+        self._mark_overlapping()
+        self.remove_tagged('is_longest', False)
+
+
+    def _mark_overlapping(self):
+        """
+        Keep only term with widest span from a list of entries
+        :return: Modify self.entries
+        """
+        range_dict = {}
+        for i, rec in enumerate(self.entries.copy()):
+            new_set = set(range(rec['index'][0], rec['index'][1]))
+            overlapping = [x for x in new_set if x in range_dict]
+            if overlapping:
+                prev_size = range_dict[overlapping[0]][0]
+                if len(new_set) > prev_size:
+                    for idx in new_set:
+                        range_dict[idx] = (len(new_set), i)
+            else:
+                for idx in new_set:
+                    range_dict[idx] = (len(new_set), i)
+
+        unique_elements = set([x[1] for x in range_dict.values()])
+
+        for i, rec in enumerate(self.entries.copy()):
+            if i in unique_elements:
+                rec['is_longest'] = True
+            else:
+                rec['is_longest'] = False
+            self.entries[i] = rec
+
 
     def resolve_conflicts(self):
         """
@@ -76,9 +113,7 @@ class Data(object):
 
     @property
     def json(self):
-        result = self.entries.copy()
-        result = remove_key(result, 'context')
-        result = remove_key(result, 'matched_tokens')
+        result = self.entries_sans_context.copy()
         return json.dumps(result)
 
     @property
@@ -90,6 +125,7 @@ class Data(object):
         result = self.entries.copy()
         result = remove_key(result, 'context')
         result = remove_key(result, 'matched_tokens')
+        result = remove_key(result, 'is_longest')
         return result
 
     @property
@@ -111,11 +147,20 @@ class Extractor:
 
     """
 
-    def __init__(self, correct_spelling=True, resolve_conflicts=True, remove_negated=False, max_neighbors=3, max_length=1000000,
-                 context_window=8, model=None, custom_synonyms=None):
+    def __init__(self, correct_spelling=True,
+                 resolve_conflicts=True,
+                 remove_negated=False,
+                 remove_overlapping=True,
+                 max_neighbors=3,
+                 max_length=1000000,
+                 context_window=8,
+                 model=None,
+                 custom_synonyms=None):
+
         self.correct_spelling = correct_spelling
         self.resolve_conflicts = resolve_conflicts
         self.remove_negated = remove_negated
+        self.remove_overlapping = remove_overlapping
         self.max_neighbors = max_neighbors
         self.max_length = max_length
         self.context_window = context_window
@@ -177,8 +222,12 @@ class Extractor:
                 extracted_terms.resolve_conflicts()
             else:
                 pass
+
         if self.remove_negated:
             extracted_terms.remove_negated()
+
+        if self.remove_overlapping:
+            extracted_terms.remove_overlapping()
 
         return extracted_terms
 
