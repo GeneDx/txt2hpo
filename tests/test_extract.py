@@ -341,7 +341,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("the patient does not have either a wide mouth or developmental delay.")
         self.assertEqual([], resp.hpids)
 
-
     def test_capitalization_affecting_outcome(self):
         extract = Extractor(correct_spelling=False)
         resp = extract.hpo("enlarged heart")
@@ -358,6 +357,9 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         resp = extract.hpo("Male with Sotos, enlarged heart")
         self.assertEqual(resp.hpids, ['HP:0001640'])
+
+        resp = extract.hpo("Myoclonic Seizures")
+        self.assertEqual(set(resp.hpids), set(['HP:0001250', 'HP:0002123']))
 
 
 
