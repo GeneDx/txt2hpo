@@ -357,6 +357,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         resp = extract.hpo("Male with Sotos, enlarged heart")
         self.assertEqual(resp.hpids, ['HP:0001640'])
+        
+        resp = extract.hpo("Myoclonic Seizures")
+        self.assertEqual(set(resp.hpids), set(['HP:0001250', 'HP:0002123']))
+
 
     def test_remove_overlapping(self):
         extract = Extractor(correct_spelling=False, remove_overlapping=False)
