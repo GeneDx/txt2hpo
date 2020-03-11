@@ -87,7 +87,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         self.assertEqual(truth, extract.hpo("Female with fourth metacarpal brachydactyly").entries_sans_context)
 
-        extract = Extractor(correct_spelling=False)
+        extract = Extractor(correct_spelling=False, remove_overlapping=False)
         truth = [{"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
                             {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
                             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
@@ -141,24 +141,24 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_hpo_big_text_spellcheck_on(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=2)
+        extract = Extractor(max_neighbors=2, remove_overlapping=False)
         self.assertEqual(extract.hpo(test_case11_text).n_entries, 12)
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=2, correct_spelling=False)
+        extract = Extractor(max_neighbors=2, correct_spelling=False, remove_overlapping=False)
         self.assertEqual(extract.hpo(test_case11_text).n_entries, 12)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=3, correct_spelling=False)
+        extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=False)
         self.assertEqual(extract.hpo(test_case11_text).n_entries, 13)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=1, correct_spelling=True)
+        extract = Extractor(max_neighbors=1, correct_spelling=True, remove_overlapping=False)
         hpo_max_2 = extract.hpo(test_case11_text).hpids
-        extract = Extractor(max_neighbors=3, correct_spelling=True)
+        extract = Extractor(max_neighbors=3, correct_spelling=True, remove_overlapping=False)
         hpo_max_3 = extract.hpo(test_case11_text).hpids
 
         self.assertNotEqual(hpo_max_2, hpo_max_3)
@@ -357,9 +357,16 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         resp = extract.hpo("Male with Sotos, enlarged heart")
         self.assertEqual(resp.hpids, ['HP:0001640'])
-
+        
         resp = extract.hpo("Myoclonic Seizures")
         self.assertEqual(set(resp.hpids), set(['HP:0002123']))
 
 
+    def test_remove_overlapping(self):
+        extract = Extractor(correct_spelling=False, remove_overlapping=False)
+        resp = extract.hpo("Polycystic kidney disease and myoclonic seizures.")
+        self.assertEqual(set(resp.hpids), set(['HP:0000113', 'HP:0000112', 'HP:0001250', 'HP:0002123']))
 
+        extract = Extractor(correct_spelling=False, remove_overlapping=True)
+        resp = extract.hpo("Polycystic kidney disease and myoclonic seizures.")
+        self.assertEqual(set(resp.hpids), set(['HP:0002123','HP:0000113']))
