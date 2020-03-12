@@ -361,7 +361,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("Myoclonic Seizures")
         self.assertEqual(set(resp.hpids), set(['HP:0002123']))
 
-
     def test_remove_overlapping(self):
         extract = Extractor(correct_spelling=False, remove_overlapping=False)
         resp = extract.hpo("Polycystic kidney disease and myoclonic seizures.")
@@ -370,3 +369,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor(correct_spelling=False, remove_overlapping=True)
         resp = extract.hpo("Polycystic kidney disease and myoclonic seizures.")
         self.assertEqual(set(resp.hpids), set(['HP:0002123','HP:0000113']))
+
+    def test_multiple_matches(self):
+        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        resp = extract.hpo("l pre auricular ear pit.")
+        self.assertEqual(resp.hpids, ['HP:0004467'])
+        resp = extract.hpo("Coloboma, microphthalmia, macrocephaly, ear pit.")
+        self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
