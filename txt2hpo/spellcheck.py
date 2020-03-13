@@ -1,11 +1,9 @@
 
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
-import spacy
 
+from txt2hpo.nlp import nlp_sans_ner
 from txt2hpo.data.spellcheck_vocab import spellcheck_vocab
 
-
-nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
 def P(word, N=sum(spellcheck_vocab.values())):
     "Probability of `word`."
@@ -50,7 +48,7 @@ def spellcheck(text):
     "correct spelling in a sentence"
     # clean up text from punctuation marks
     corrected_text = []
-    for token in nlp(text):
+    for token in nlp_sans_ner(text):
 
         if token.is_stop:
             corrected_text.append(token.text_with_ws)

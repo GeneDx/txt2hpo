@@ -25,7 +25,7 @@ try:
 except OSError as e:
     logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
     from spacy.cli import download
-    download('en')
+    download('en_core_web_sm')
     nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
 # these are used in hpo as part of phenotype definition, should block from filtering
