@@ -1,4 +1,5 @@
-import spacy
+import en_core_web_sm
+import en_core_sci_sm
 from negspacy.negation import Negex
 from gensim.parsing.preprocessing import remove_stopwords
 from txt2hpo.config import logger
@@ -6,8 +7,9 @@ from txt2hpo.util import hpo_network
 from nltk.stem import RegexpStemmer
 from spacy.tokens import Token
 
+
 try:
-    nlp = spacy.load("en_core_sci_sm", disable=["tagger", "parser"])
+    nlp = en_core_sci_sm.load(disable=["tagger", "parser"])
     nlp.add_pipe(nlp.create_pipe('sentencizer'))
     negex = Negex(nlp, language="en_clinical", chunk_prefix=["no"])
     nlp.add_pipe(negex, last=True)
@@ -18,14 +20,13 @@ except OSError as e:
     logger.info('negation model could not be loaded\n')
 
 try:
-    nlp_sans_ner = spacy.load("en_core_sci_sm", disable=["tagger", "parser", "ner"])
+    nlp_sans_ner = en_core_sci_sm.load(disable=["tagger", "parser", "ner"])
 
 except OSError as e:
     logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
     from spacy.cli import download
     download('en')
-    nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
-
+    nlp_sans_ner = en_core_web_sm.load(disable=["tagger", "parser", "ner"])
 
 # these are used in hpo as part of phenotype definition, should block from filtering
 remove_from_stops = "first second third fourth fifth under over front back behind ca above below without no not "
