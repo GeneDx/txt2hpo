@@ -9,8 +9,8 @@ from spacy.tokens import Token
 try:
     nlp = spacy.load("en_core_sci_sm", disable=["tagger", "parser"])
     nlp.add_pipe(nlp.create_pipe('sentencizer'))
-    negex = Negex(nlp, chunk_prefix=["no", "absent", "negative", "not", "none"])
-    nlp.add_pipe(negex)
+    negex = Negex(nlp, language="en_clinical", chunk_prefix=["no"])
+    nlp.add_pipe(negex, last=True)
     Token.set_extension('negex', default=False, force=True)
 
 except OSError as e:
@@ -18,7 +18,7 @@ except OSError as e:
     logger.info('negation model could not be loaded\n')
 
 try:
-    nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
+    nlp_sans_ner = spacy.load("en_core_sci_sm", disable=["tagger", "parser", "ner"])
 
 except OSError as e:
     logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')

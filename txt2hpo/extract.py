@@ -48,11 +48,9 @@ class Data(object):
         self.detect_negation()
         self.remove_tagged('is_negated')
 
-
     def remove_overlapping(self):
         self._mark_overlapping()
         self.remove_tagged('is_longest', False)
-
 
     def _mark_overlapping(self):
         """

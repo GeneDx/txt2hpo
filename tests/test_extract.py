@@ -315,6 +315,12 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(truth, resp.json)
 
     def test_extract_without_negated(self):
+
+        # negation should not apply if negation is part of matched string
+        extract = Extractor(remove_negated=True)
+        resp = extract.hpo("the patient presents with absent speech")
+        self.assertEqual(resp.hpids, ['HP:0001344'])
+
         extract = Extractor()
         resp = extract.hpo("developmental delay and a wide mouth")
         resp.detect_negation()
