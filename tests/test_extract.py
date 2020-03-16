@@ -88,10 +88,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(truth, extract.hpo("Female with fourth metacarpal brachydactyly").entries_sans_context)
 
         extract = Extractor(correct_spelling=False, remove_overlapping=False)
-        truth = [{"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
+        truth = [           {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
                             {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
                             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
-                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}]
+                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}
+                            ]
 
         self.assertEqual(truth, extract.hpo("Male with eczema, skin rash, and sparse hair").entries_sans_context)
 
@@ -146,13 +147,13 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=2, correct_spelling=False, remove_overlapping=False)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 12)
+        extract = Extractor(max_neighbors=2, correct_spelling=False, remove_overlapping=True)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 7)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
-        extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=False)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 13)
+        extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=True)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 8)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
@@ -307,7 +308,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(truth, resp.entries_sans_context)
 
     def test_extract_json_property(self):
-        extract = Extractor()
+        extract = Extractor(max_neighbors=2)
         truth = json.dumps([{"hpid": ["HP:0000154"],
                              "index": [16, 26],
                              "matched": "wide mouth"}])
@@ -383,3 +384,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("Coloboma, microphthalmia, macrocephaly, ear pit.")
         self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
 
+    def test_handling_term_punctuation(self):
+        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        resp = extract.hpo("Macroorchidism, postpubertal")
+        self.assertEqual(["HP:0002050"], resp.hpids)
+
+        resp = extract.hpo("Urethral atresia, male")
+        self.assertEqual(['HP:0000052'], resp.hpids)
