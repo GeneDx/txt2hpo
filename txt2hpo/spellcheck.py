@@ -1,8 +1,9 @@
 
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
-
+from txt2hpo.data import load_spellcheck_vocab
 from txt2hpo.nlp import nlp_sans_ner
-from txt2hpo.data.spellcheck_vocab import spellcheck_vocab
+
+spellcheck_vocab = load_spellcheck_vocab()
 
 
 def P(word, N=sum(spellcheck_vocab.values())):
@@ -10,7 +11,7 @@ def P(word, N=sum(spellcheck_vocab.values())):
     if word in spellcheck_vocab:
         return spellcheck_vocab[word] / N
     else:
-        return 0.1/N
+        return 0
 
 
 def correction(word):
@@ -59,7 +60,13 @@ def spellcheck(text):
         elif len(token) < 5:
             corrected_text.append(token.text_with_ws)
         else:
-            corrected_text.append(correction(token.text))
+            corrected = correction(token.text.lower())
+            if token.text[0].isupper() and token.text[-1].islower():
+                corrected_text.append(corrected.capitalize())
+            elif token.text[0].isupper() and token.text[-1].isupper():
+                corrected_text.append(corrected.upper())
+            else:
+                corrected_text.append(corrected)
             corrected_text.append(token.whitespace_)
 
     return "".join(corrected_text)

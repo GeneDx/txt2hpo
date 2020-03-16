@@ -178,8 +178,8 @@ class Extractor:
         nlp_sans_ner.max_length = self.max_length
 
         extracted_terms = Data(model=self.model)
-        if not text[0].isupper():
-            text = text.capitalize()
+        # if not text[0].isupper():
+        #     text = text.capitalize()
         chunks = [text[i:i + self.max_length] for i in range(0, len(text), self.max_length)]
         len_last_chunk = 1
 
@@ -438,33 +438,20 @@ def self_evaluation(correct_spelling=False, resolve_conflicts=False):
     logger.info('Running self evaluation, this may take a few minutes \n')
     i = 0
     n_nodes = len(hpo_network.nodes)
-    hpo = Extractor(correct_spelling=correct_spelling, resolve_conflicts=resolve_conflicts).hpo
+    ext = Extractor(correct_spelling=correct_spelling, resolve_conflicts=resolve_conflicts)
     for node in hpo_network:
         total += 1
         term = hpo_network.nodes[node]['name']
         hpids = []
-        extracted = hpo(term)
-        if extracted:
-            extracted = json.loads(extracted)
-
-            for item in extracted:
-                hpids += item['hpid']
-
-            if str(node) in hpids:
-                correct += 1
-            else:
-                wrong.append(dict(
-                    actual=node,
-                    actual_name=term,
-                    extracted=hpids,
-                    extracted_name=[hpo_network.nodes[x]['name'] for x in hpids],
-                ))
+        extracted = ext.hpo(term).hpids
+        if str(node) in extracted:
+            correct += 1
         else:
             wrong.append(dict(
                 actual=node,
                 actual_name=term,
-                extracted=[],
-                extracted_name=[],
+                extracted=hpids,
+                extracted_name=[hpo_network.nodes[x]['name'] for x in hpids],
             ))
 
         i += 1

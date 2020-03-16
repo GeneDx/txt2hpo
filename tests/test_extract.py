@@ -70,13 +70,13 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         # Test spellchecker
         extract = Extractor(correct_spelling=True)
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "hypotonic"}]
+        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonic"}]
 
-        self.assertEqual(extract.hpo("hyptonic").entries_sans_context, truth)
+        self.assertEqual(extract.hpo("Hyptonic").entries_sans_context, truth)
 
         truth = []
         extract = Extractor(correct_spelling=False)
-        self.assertEqual(extract.hpo("hyptonic").entries_sans_context, truth)
+        self.assertEqual(extract.hpo("Hyptonic").entries_sans_context, truth)
 
         truth = [{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia"},
                         {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures"}]
@@ -279,7 +279,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_extract_ambiguous(self):
         # test resolver works
         extract = Extractor(resolve_conflicts=True)
-        truth = [{"hpid": ["HP:0001631"], "index": [44, 47], "matched": "asd"}]
+        truth = [{"hpid": ["HP:0001631"], "index": [44, 47], "matched": "ASD"}]
         test1 = extract.hpo("secundum, all underwent surgical repair for ASD except for 1 individual whose defect spontaneously closed")
         self.assertEqual(truth, test1.entries_sans_context)
 
@@ -382,3 +382,4 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(resp.hpids, ['HP:0004467'])
         resp = extract.hpo("Coloboma, microphthalmia, macrocephaly, ear pit.")
         self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
+

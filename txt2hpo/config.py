@@ -58,6 +58,10 @@ if not os.path.isfile(os.path.join(config_directory, 'txt2hpo.ini')):
     wv.save(d2v_vw_path)
     config['models']['doc2vec'] = d2v_vw_path
 
+    config['data'] = {}
+    spellcheck_vocab_path = os.path.join(os.path.dirname(__file__), 'data/spellcheck_vocab_upd032020.json')
+    config['data']['spellcheck_vocab'] = spellcheck_vocab_path
+
     with open(os.path.join(config_directory, 'txt2hpo.ini'), 'w') as configfile:
         logger.info('writing config file to: %s '%config_directory)
         config.write(configfile)
