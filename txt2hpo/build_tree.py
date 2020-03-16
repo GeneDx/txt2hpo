@@ -24,7 +24,6 @@ def build_search_tree(custom_synonyms={}):
             else:
                 hpo_network.nodes[hpid]['synonyms'] = synonyms
 
-
     i = 0
     n_nodes = len(hpo_network.nodes)
 

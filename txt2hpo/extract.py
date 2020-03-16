@@ -252,9 +252,9 @@ class Extractor:
                 phen_start = min(phen_group)
                 phen_stop = max(phen_group) + 1
                 phen_group_tokens = tokens[phen_start:phen_stop]
-                phen_group_tokens_minus_trash = [x for x in phen_group_tokens if not x.is_stop or x.is_punct]
+                phen_group_tokens_minus_trash = [x for x in phen_group_tokens if not x.is_stop and not x.is_punct]
                 phen_group_tokens_minus_trash_idx = [x.i for x in phen_group_tokens_minus_trash]
-                phen_group_strings = [stemmed_tokens[x] for x in phen_group_tokens_minus_trash_idx]
+                phen_group_strings = [stemmed_tokens[x] for x in phen_group_tokens_minus_trash_idx] #phen_group_tokens_minus_trash_idx
 
             # sort to match same order as used in making keys for search tree
             try_term_key = ' '.join(sorted(phen_group_strings))
@@ -438,7 +438,7 @@ def self_evaluation(correct_spelling=False, resolve_conflicts=False):
     logger.info('Running self evaluation, this may take a few minutes \n')
     i = 0
     n_nodes = len(hpo_network.nodes)
-    ext = Extractor(correct_spelling=correct_spelling, resolve_conflicts=resolve_conflicts)
+    ext = Extractor(correct_spelling=correct_spelling, remove_overlapping=True, resolve_conflicts=True)
     for node in hpo_network:
         total += 1
         term = hpo_network.nodes[node]['name']
