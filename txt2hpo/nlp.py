@@ -8,16 +8,24 @@ from nltk.stem import RegexpStemmer
 from spacy.tokens import Token
 
 
-try:
-    nlp = en_core_sci_sm.load(disable=["tagger", "parser"])
-    nlp.add_pipe(nlp.create_pipe('sentencizer'))
-    negex = Negex(nlp, language="en_clinical", chunk_prefix=["no"])
-    nlp.add_pipe(negex, last=True)
-    Token.set_extension('negex', default=False, force=True)
+def nlp_model(negation_language="en"):
+    try:
+        nlp = en_core_sci_sm.load(disable=["tagger", "parser"])
+        nlp.add_pipe(nlp.create_pipe('sentencizer'))
+        negex = Negex(nlp, language=negation_language, chunk_prefix=["no"])
+        nlp.add_pipe(negex, last=True)
+        Token.set_extension('negex', default=False, force=True)
 
-except OSError as e:
-    nlp = None
-    logger.info('negation model could not be loaded\n')
+    except OSError:
+        nlp = None
+        logger.info('negation model could not be loaded\n')
+
+    if nlp:
+        for not_a_stop in remove_from_stops.split(" "):
+            nlp.vocab[not_a_stop].is_stop = False
+            nlp.vocab[not_a_stop.capitalize()].is_stop = False
+
+    return nlp
 
 try:
     nlp_sans_ner = en_core_sci_sm.load(disable=["tagger", "parser", "ner"])
@@ -35,9 +43,6 @@ remove_from_stops += "out up side right left more less during than take move ful
 for not_a_stop in remove_from_stops.split(" "):
     nlp_sans_ner.vocab[not_a_stop].is_stop = False
     nlp_sans_ner.vocab[not_a_stop.capitalize()].is_stop = False
-    if nlp:
-        nlp.vocab[not_a_stop].is_stop = False
-        nlp.vocab[not_a_stop.capitalize()].is_stop = False
 
 
 st = RegexpStemmer('ing$|e$|able$|ic$|ia$|ity$|al$|ly$', min=7)

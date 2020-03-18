@@ -6,7 +6,7 @@ import spacy
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
 from txt2hpo.spellcheck import spellcheck
-from txt2hpo.nlp import nlp, nlp_sans_ner, similarity_term_to_context
+from txt2hpo.nlp import nlp_model, nlp_sans_ner, similarity_term_to_context
 from txt2hpo.nlp import st
 from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree, build_search_tree
@@ -14,12 +14,13 @@ from txt2hpo.util import remove_key
 
 
 class Data(object):
-    def __init__(self, entries=None, model=None):
+    def __init__(self, entries=None, model=None, negation_model=None):
         if not entries:
             self.entries = []
         else:
             self.entries = entries
         self.model = model
+        self.negation_model = negation_model
 
     def add(self,entry):
         self.entries += entry
@@ -34,7 +35,7 @@ class Data(object):
 
     def detect_negation(self):
         for entry in self.entries:
-            entry['negated_tokens'] = ' '.join([e.text for e in nlp(entry['context']).ents if e._.negex])
+            entry['negated_tokens'] = ' '.join([e.text for e in self.negation_model(entry['context']).ents if e._.negex])
             entry['negated'] = [t.text for t in nlp_sans_ner(entry['negated_tokens'])]
             if isinstance(entry['matched_tokens'], (spacy.tokens.doc.Doc, spacy.tokens.span.Span)):
                 entry['matched_words'] = [t.text for t in entry['matched_tokens']]
@@ -152,7 +153,9 @@ class Extractor:
                  max_length=1000000,
                  context_window=8,
                  model=None,
-                 custom_synonyms=None):
+                 custom_synonyms=None,
+                 negation_language="en"
+                 ):
 
         self.correct_spelling = correct_spelling
         self.resolve_conflicts = resolve_conflicts
@@ -161,6 +164,7 @@ class Extractor:
         self.max_neighbors = max_neighbors
         self.max_length = max_length
         self.context_window = context_window
+        self.negation_model = nlp_model(negation_language=negation_language)
         if custom_synonyms:
             self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
         else:
@@ -177,7 +181,7 @@ class Extractor:
 
         nlp_sans_ner.max_length = self.max_length
 
-        extracted_terms = Data(model=self.model)
+        extracted_terms = Data(model=self.model, negation_model=self.negation_model)
         # if not text[0].isupper():
         #     text = text.capitalize()
         chunks = [text[i:i + self.max_length] for i in range(0, len(text), self.max_length)]
