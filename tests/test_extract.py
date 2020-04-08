@@ -4,6 +4,7 @@ import json
 from txt2hpo.extract import Extractor, Data, group_sequence
 from txt2hpo.data import load_model
 from tests.test_cases import *
+from txt2hpo.util import hpo_network
 
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
@@ -153,7 +154,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
         extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=True)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 8)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 7)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
@@ -391,3 +392,20 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         resp = extract.hpo("Urethral atresia, male")
         self.assertEqual(['HP:0000052'], resp.hpids)
+
+    def test_handing_term_hyphenation(self):
+        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        hyphenated_phenos = [(hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes()
+                             if '-' in hpo_network.nodes()[x]['name']]
+        long_phenos = ['HP:0011654', 'HP:0410303']
+        hyphenated_phenos = [x for x in hyphenated_phenos if x[1] not in long_phenos]
+
+        print(len(hyphenated_phenos))
+        for test in hyphenated_phenos:
+            # current version is not expected to extract very long phenotypes
+            hpids = extract.hpo(test[0]).hpids
+            self.assertEqual(hpids, [test[1]])
+            # replace hyphens with space
+            hpids = extract.hpo(test[0].replace('-', ' ')).hpids
+            self.assertEqual(hpids, [test[1]])
+

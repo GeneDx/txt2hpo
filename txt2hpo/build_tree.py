@@ -43,6 +43,7 @@ def build_search_tree(custom_synonyms={}):
             extended_names.append(name.lower())
             extended_names.append(name.capitalize())
             extended_names.append(name.title())
+            extended_names.append(name.replace('-',' '))
             extended_names.append(name.replace('Abnormality', 'Disorder'))
 
         for name in extended_names:
@@ -54,7 +55,7 @@ def build_search_tree(custom_synonyms={}):
                     terms[token] = {}
                 if len(tokens) not in terms[token]:
                     terms[token][len(tokens)] = {}
-                name_identifier = ' '.join(sorted(tokens))
+                name_identifier = ' '.join(tokens) #sorted
                 if name_identifier not in terms[token][len(tokens)]:
                     terms[token][len(tokens)][name_identifier] = [node]
                 elif node not in terms[token][len(tokens)][name_identifier]:
