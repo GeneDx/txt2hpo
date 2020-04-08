@@ -350,7 +350,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual([], resp.hpids)
 
     def test_capitalization_affecting_outcome(self):
-        extract = Extractor(correct_spelling=False)
+        extract = Extractor(correct_spelling=False, remove_overlapping=True)
         resp = extract.hpo("enlarged heart")
         self.assertEqual(resp.hpids, ['HP:0001640'])
 
@@ -400,7 +400,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         long_phenos = ['HP:0011654', 'HP:0410303']
         hyphenated_phenos = [x for x in hyphenated_phenos if x[1] not in long_phenos]
 
-        print(len(hyphenated_phenos))
         for test in hyphenated_phenos:
             # current version is not expected to extract very long phenotypes
             hpids = extract.hpo(test[0]).hpids

@@ -18,7 +18,7 @@ def nlp_model(negation_language="en"):
 
     except OSError:
         nlp = None
-        logger.info('negation model could not be loaded\n')
+        logger.info('Negation model could not be loaded\n')
 
     if nlp:
         for not_a_stop in remove_from_stops.split(" "):
@@ -29,9 +29,11 @@ def nlp_model(negation_language="en"):
 
 try:
     nlp_sans_ner = en_core_sci_sm.load(disable=["tagger", "parser", "ner"])
+    logger.info('Using sci spacy language model\n')
 
 except OSError as e:
-    logger.info('Performing a one-time download of an English language model for the spaCy POS tagger\n')
+    logger.info('Sci spacy language model could not be loaded\n')
+    logger.info('Performing a one-time download of an English language model\n')
     from spacy.cli import download
     download('en_core_web_sm')
     nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
