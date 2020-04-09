@@ -55,13 +55,8 @@ def build_search_tree(custom_synonyms={}):
                     terms[token] = {}
                 if len(tokens) not in terms[token]:
                     terms[token][len(tokens)] = {}
-                # name_identifier = ' '.join(tokens) #sorted
-                # if name_identifier not in terms[token][len(tokens)]:
-                #     terms[token][len(tokens)][name_identifier] = [node]
-                # elif node not in terms[token][len(tokens)][name_identifier]:
-                #     terms[token][len(tokens)][name_identifier].append(node)
-                # remove sorted
-                name_identifier = ' '.join(sorted(tokens))  # sorted
+
+                name_identifier = ' '.join(tokens)
                 if name_identifier not in terms[token][len(tokens)]:
                     terms[token][len(tokens)][name_identifier] = [node]
                 elif node not in terms[token][len(tokens)][name_identifier]:

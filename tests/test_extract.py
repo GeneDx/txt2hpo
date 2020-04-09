@@ -154,7 +154,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
         extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=True)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 8)
+        self.assertEqual(extract.hpo(test_case11_text).n_entries, 7)
 
     def test_hpo_big_text_max_neighbors(self):
         # test parsing a page
@@ -366,16 +366,16 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("Male with Sotos, enlarged heart")
         self.assertEqual(resp.hpids, ['HP:0001640'])
         
-        resp = extract.hpo("Myoclonic Seizures")
+        resp = extract.hpo("Myoclonus Seizures")
         self.assertEqual(set(resp.hpids), set(['HP:0002123']))
 
     def test_remove_overlapping(self):
         extract = Extractor(correct_spelling=False, remove_overlapping=False)
-        resp = extract.hpo("Polycystic kidney disease and myoclonic seizures.")
-        self.assertEqual(set(resp.hpids), set(['HP:0000113', 'HP:0000112', 'HP:0001250', 'HP:0002123']))
+        resp = extract.hpo("Polycystic kidney disease and myoclonus seizures.")
+        self.assertEqual(set(resp.hpids), set(['HP:0000113', 'HP:0000112', 'HP:0001250', 'HP:0002123','HP:0001336']))
 
         extract = Extractor(correct_spelling=False, remove_overlapping=True)
-        resp = extract.hpo("Polycystic kidney disease and myoclonic seizures.")
+        resp = extract.hpo("Polycystic kidney disease and myoclonus seizures.")
         self.assertEqual(set(resp.hpids), set(['HP:0002123','HP:0000113']))
 
     def test_multiple_matches(self):
@@ -398,7 +398,8 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         hyphenated_phenos = [(hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes()
                              if '-' in hpo_network.nodes()[x]['name']]
         # Phenotypes where word-order is important is a limitation of current parsing method
-        known_bugs = ['HP:0000510', 'HP:0030932']
+        #known_bugs = ['HP:0000510', 'HP:0030932']
+        known_bugs = []
         long_phenos = ['HP:0011654', 'HP:0410303']
         hyphenated_phenos = [x for x in hyphenated_phenos if x[1] not in known_bugs + long_phenos]
 

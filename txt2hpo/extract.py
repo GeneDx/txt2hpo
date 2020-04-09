@@ -260,8 +260,7 @@ class Extractor:
                 phen_group_tokens_minus_trash_idx = [x.i for x in phen_group_tokens_minus_trash]
                 phen_group_strings = [stemmed_tokens[x] for x in phen_group_tokens_minus_trash_idx] #phen_group_tokens_minus_trash_idx
 
-            # sort to match same order as used in making keys for search tree
-            try_term_key = ' '.join(sorted(phen_group_strings)) #sorted
+            try_term_key = ' '.join(phen_group_strings)
 
             # attempt to extract hpo terms from tree based on root, length of phrase and key
             try:
