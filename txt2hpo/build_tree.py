@@ -52,7 +52,8 @@ def build_search_tree(custom_synonyms=None, masked_terms=None):
         # extend names using custom rules
         extended_names = []
         for name in names:
-
+            name = name.replace(', ',' ')
+            name = name.replace(',', ' ')
             extended_names.append(name.lower())
             extended_names.append(name.capitalize())
             extended_names.append(name.title())

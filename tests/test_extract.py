@@ -64,8 +64,8 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         # Test extracting two multiword phenotype preceding interrupted by an unrelated phenotypic term
         truth = [
+                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "Hearing loss"},
                             {"hpid": ["HP:0001263"], "index": [23, 42], "matched": "developmental delay"},
-                            {"hpid": ["HP:0000365"], "index": [0, 12], "matched": "Hearing loss"}
                             ]
         self.assertEqual(extract.hpo("Hearing loss following developmental delay").entries_sans_context, truth)
 
@@ -79,8 +79,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor(correct_spelling=False)
         self.assertEqual(extract.hpo("Hyptonic").entries_sans_context, truth)
 
-        truth = [{"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia"},
-                        {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures"}]
+        truth = [
+            {"hpid": ["HP:0002757"],"index": [12, 30], "matched": "multiple fractures"},
+            {"hpid": ["HP:0000938"], "index": [35, 45], "matched": "osteopenia"},
+        ]
 
         self.assertEqual(truth, extract.hpo("Female with multiple fractures and osteopenia NA NA").entries_sans_context)
 
@@ -88,15 +90,15 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         self.assertEqual(truth, extract.hpo("Female with fourth metacarpal brachydactyly").entries_sans_context)
 
-        extract = Extractor(correct_spelling=False, remove_overlapping=False, max_neighbors=2)
-        truth = [           {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
-                            {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
-                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"},
-                            {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
-
-                            ]
-
-        self.assertEqual(truth, extract.hpo("Male with eczema, skin rash, and sparse hair").entries_sans_context)
+        extract = Extractor(correct_spelling=False, remove_overlapping=False)
+        truth = [
+            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"},
+            {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
+            {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
+            {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
+            ]
+        resp = extract.hpo("Male with eczema, skin rash, and sparse hair").entries_sans_context
+        self.assertEqual(truth, resp)
 
         # Test extracting an abbreviated phenotype
         truth = [{"hpid": ["HP:0001370"], "index": [0, 2], "matched": "RA"}]
@@ -109,7 +111,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(extract.hpo("Hypotonia, developmental delay").entries_sans_context, truth)
 
         # Test term indexing given max length of extracted text
-        extract = Extractor(correct_spelling=False, max_length=20)
+        extract = Extractor(correct_spelling=False, max_length=20, chunk_by="max_length")
         truth = [
             {"hpid": ["HP:0001263"], "index": [0, 19], "matched": "Developmental delay"},
             {"hpid": ["HP:0001290"], "index": [21, 30], "matched": "hypotonia"}
@@ -175,7 +177,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         sentences = ['Hypotonia', 'Developmental delay']
         for sentence in sentences:
             self.assertNotEqual(extract.hpo(sentence).n_entries, 0)
-        hpo = Extractor(correct_spelling=True)
+        extract = Extractor(correct_spelling=True)
         sentences = ['Developmental delay', 'Hypotonia']
         for sentence in sentences:
             self.assertNotEqual(extract.hpo(sentence).n_entries, 0)
@@ -386,18 +388,18 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("Coloboma, microphthalmia, macrocephaly, ear pit.")
         self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
 
-    def test_handling_term_punctuation(self):
-        extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
-        resp = extract.hpo("Macroorchidism, postpubertal")
-        self.assertEqual(["HP:0002050"], resp.hpids)
-
-        resp = extract.hpo("Urethral atresia, male")
-        self.assertEqual(['HP:0000052'], resp.hpids)
-
     def test_handing_term_hyphenation(self):
-        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True, max_neighbors=3)
-        hyphenated_phenos = [(hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes()
-                             if '-' in hpo_network.nodes()[x]['name']]
+        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        hyphenated_phenos = \
+            [
+            (hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes() \
+            if (
+                    '-' in hpo_network.nodes()[x]['name'] and
+                    ',' not in hpo_network.nodes()[x]['name'] and
+                    '.' not in hpo_network.nodes()[x]['name']
+                )
+
+            ]
         # Phenotypes where word-order is important is a limitation of current parsing method
         known_bugs = ['HP:0000510', 'HP:0030932']
         #known_bugs = []

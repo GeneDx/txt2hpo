@@ -2,6 +2,7 @@ import json
 import numpy as np
 from itertools import combinations, chain
 import spacy
+import re
 
 from txt2hpo.build_tree import update_progress, hpo_network
 from txt2hpo.config import logger
@@ -121,6 +122,7 @@ class Data(object):
     @property
     def entries_sans_context(self):
         result = self.entries.copy()
+        result = sorted(result, key=lambda i: i['index'][0], reverse=False)
         result = remove_key(result, 'context')
         result = remove_key(result, 'matched_tokens')
         result = remove_key(result, 'is_longest')
@@ -151,11 +153,11 @@ class Extractor:
                  remove_overlapping=True,
                  max_neighbors=3,
                  max_length=1000000,
-                 context_window=15,
+                 context_window=8,
                  model=None,
                  custom_synonyms=None,
-                 masked_terms=None,
-                 negation_language="en"
+                 negation_language="en",
+                 chunk_by='phrase'
                  ):
 
         self.correct_spelling = correct_spelling
@@ -166,8 +168,9 @@ class Extractor:
         self.max_length = max_length
         self.context_window = context_window
         self.negation_model = nlp_model(negation_language=negation_language)
-        if custom_synonyms or masked_terms:
-            self.search_tree = build_search_tree(custom_synonyms=custom_synonyms, masked_terms=masked_terms)
+        self.chunk_by = chunk_by
+        if custom_synonyms:
+            self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
         else:
             self.search_tree = search_tree
         if model is None:
@@ -183,12 +186,17 @@ class Extractor:
         nlp_sans_ner.max_length = self.max_length
 
         extracted_terms = Data(model=self.model, negation_model=self.negation_model)
-        # if not text[0].isupper():
-        #     text = text.capitalize()
-        chunks = [text[i:i + self.max_length] for i in range(0, len(text), self.max_length)]
-        len_last_chunk = 1
+
+        len_last_chunk = 0
+
+        if self.chunk_by == "max_length":
+
+            chunks = [text[i:i + self.max_length] for i in range(0, len(text), self.max_length)]
+        elif self.chunk_by == "phrase":
+            chunks = re.split(";|,|\n|\r|\.", text)
 
         for i, chunk in enumerate(chunks):
+
             if self.correct_spelling:
                 chunk = spellcheck(chunk)
 
@@ -211,13 +219,17 @@ class Extractor:
 
             phen_groups = recombine_groups(assembled_groups)
 
-            # Extract hpo terms
+            # Extract hpo terms keep track of chunked coordinates, split character len=1
+
             extracted_terms.add(self.find_hpo_terms(tuple(phen_groups),
                                               tuple(stemmed_tokens),
                                               tokens,
-                                              base_index=i * len_last_chunk,
+                                              base_index=len_last_chunk,
                                               ))
-            len_last_chunk = len(chunk)
+            if self.chunk_by == 'phrase':
+                len_last_chunk += len(chunk) + 1
+            elif self.chunk_by == 'max_length':
+                len_last_chunk += len(chunk)
 
         if extracted_terms:
             if self.resolve_conflicts is True:
