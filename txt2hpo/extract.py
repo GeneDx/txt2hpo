@@ -149,7 +149,7 @@ class Extractor:
                  resolve_conflicts=True,
                  remove_negated=False,
                  remove_overlapping=True,
-                 max_neighbors=2,
+                 max_neighbors=3,
                  max_length=1000000,
                  context_window=15,
                  model=None,
