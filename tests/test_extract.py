@@ -88,11 +88,12 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         self.assertEqual(truth, extract.hpo("Female with fourth metacarpal brachydactyly").entries_sans_context)
 
-        extract = Extractor(correct_spelling=False, remove_overlapping=False)
-        truth = [           {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
-                            {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
+        extract = Extractor(correct_spelling=False, remove_overlapping=False, max_neighbors=2)
+        truth = [           {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
+                            {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
+                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"},
                             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
-                            {"hpid": ["HP:0000964"], "index": [10, 16], "matched": "eczema"}
+
                             ]
 
         self.assertEqual(truth, extract.hpo("Male with eczema, skin rash, and sparse hair").entries_sans_context)
@@ -386,7 +387,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
 
     def test_handling_term_punctuation(self):
-        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        extract = Extractor(max_neighbors=3, correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
         resp = extract.hpo("Macroorchidism, postpubertal")
         self.assertEqual(["HP:0002050"], resp.hpids)
 
@@ -394,7 +395,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(['HP:0000052'], resp.hpids)
 
     def test_handing_term_hyphenation(self):
-        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True, max_neighbors=3)
         hyphenated_phenos = [(hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes()
                              if '-' in hpo_network.nodes()[x]['name']]
         # Phenotypes where word-order is important is a limitation of current parsing method

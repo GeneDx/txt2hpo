@@ -151,9 +151,10 @@ class Extractor:
                  remove_overlapping=True,
                  max_neighbors=3,
                  max_length=1000000,
-                 context_window=8,
+                 context_window=15,
                  model=None,
                  custom_synonyms=None,
+                 masked_terms=None,
                  negation_language="en"
                  ):
 
@@ -165,8 +166,8 @@ class Extractor:
         self.max_length = max_length
         self.context_window = context_window
         self.negation_model = nlp_model(negation_language=negation_language)
-        if custom_synonyms:
-            self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
+        if custom_synonyms or masked_terms:
+            self.search_tree = build_search_tree(custom_synonyms=custom_synonyms, masked_terms=masked_terms)
         else:
             self.search_tree = search_tree
         if model is None:
