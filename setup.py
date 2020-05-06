@@ -11,7 +11,7 @@ setup(
 name=__project__,
     packages=find_packages(),
     version=__version__,
-    description='Phenotype extraction using Named Entity Recognition',
+    description='HPO concept recognition and phenotype extraction tool',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Vlad Gainullin <vgainullin@genedx.com>, Kevin Arvai <karvai@genedx.com>',
