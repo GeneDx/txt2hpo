@@ -43,7 +43,7 @@ print(result.hpids)
     
 ```
 
-`txt2hpo` handles negation using [negspaCy]("https://spacy.io/universe/project/negspacy"). To remove negated phenotypes set `remove_negated` flag to True.
+`txt2hpo` handles negation using [negspaCy](https://spacy.io/universe/project/negspacy). To remove negated phenotypes set `remove_negated` flag to True.
  
 
 ```python 
