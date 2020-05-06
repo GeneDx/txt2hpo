@@ -31,7 +31,7 @@ name=__project__,
         'negspacy',
         'networkx',
         'gensim',
-        'en_core_sci_sm'
+        'en_core_sci_sm @ https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.2.4/en_core_sci_sm-0.2.4.tar.gz',
 
 
     ],

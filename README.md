@@ -4,6 +4,14 @@
 
 # Installation
 
+Install using pip
+```bash
+
+pip install txt2hpo
+
+```
+
+
 Install from GitHub
 ```bash
 
