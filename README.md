@@ -24,7 +24,7 @@ result = extract.hpo("patient with developmental delay and hypotonia")
 print(result.hpids)
 
 
-["HP:0001290", "HP:0001263"]
+["HP:0001263", "HP:0001290"]
     
 ```
 
@@ -42,6 +42,45 @@ print(result.hpids)
  
     
 ```
+
+`txt2hpo` handles negation using negspacy. To remove negated phenotypes set `remove_negeted` flag to True.
+ 
+
+```python 
+from txt2hpo.extract import Extractor
+extract = Extractor(remove_negated=True)
+result = extract.hpo("patient has developmental delay but no hypotonia")
+
+print(result.hpids)
+
+["HP:0001263"]
+ 
+    
+```
+
+`txt2hpo` picks the longest overlapping phenotype by default. To disable this feature set `remove_overlapping` flag to False.
+ 
+
+```python 
+from txt2hpo.extract import Extractor
+extract = Extractor(remove_overlapping=False)
+result = extract.hpo("patient with polycystic kidney disease")
+
+print(result.hpids)
+
+["HP:0000113", "HP:0000112"]
+
+
+extract = Extractor(remove_overlapping=True)
+result = extract.hpo("patient with polycystic kidney disease")
+
+print(result.hpids)
+
+["HP:0000113"]
+ 
+    
+```
+
 
 `txt2hpo` outputs a valid JSON string.
 
