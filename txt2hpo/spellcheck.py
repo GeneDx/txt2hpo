@@ -1,18 +1,17 @@
 
 # Peter Norvig spell checker https://norvig.com/spell-correct.html
-import spacy
+from txt2hpo.data import load_spellcheck_vocab
+from txt2hpo.nlp import nlp_sans_ner
 
-from txt2hpo.data.spellcheck_vocab import spellcheck_vocab
+spellcheck_vocab = load_spellcheck_vocab()
 
-
-nlp = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
 def P(word, N=sum(spellcheck_vocab.values())):
     "Probability of `word`."
     if word in spellcheck_vocab:
         return spellcheck_vocab[word] / N
     else:
-        return 0.1/N
+        return 0
 
 
 def correction(word):
@@ -50,7 +49,7 @@ def spellcheck(text):
     "correct spelling in a sentence"
     # clean up text from punctuation marks
     corrected_text = []
-    for token in nlp(text):
+    for token in nlp_sans_ner(text):
 
         if token.is_stop:
             corrected_text.append(token.text_with_ws)
@@ -58,8 +57,16 @@ def spellcheck(text):
         elif token.is_punct:
             corrected_text.append(token.text_with_ws)
 
+        elif len(token) < 5:
+            corrected_text.append(token.text_with_ws)
         else:
-            corrected_text.append(correction(token.text))
+            corrected = correction(token.text.lower())
+            if token.text[0].isupper() and token.text[-1].islower():
+                corrected_text.append(corrected.capitalize())
+            elif token.text[0].isupper() and token.text[-1].isupper():
+                corrected_text.append(corrected.upper())
+            else:
+                corrected_text.append(corrected)
             corrected_text.append(token.whitespace_)
 
     return "".join(corrected_text)

@@ -1,13 +1,8 @@
 # txt2hpo
 `txt2hpo` is a Python library for extracting HPO-encoded phenotypes from text.
-`txt2hpo` recognizes differences in inflection (e.g. hypotonic vs. hypotonia), is able to parse complex multi-word phenotypes with differing word order (e.g. developmentally delayed vs. developmental delay) and comes with a built-in medical spellchecker. 
+`txt2hpo` recognizes differences in inflection (e.g. hypotonic vs. hypotonia), handles negation and comes with a built-in medical spellchecker. 
 
 # Installation
-
-Install using pip:
-```bash
-pip install txt2hpo
-```
 
 Install from GitHub
 ```bash
@@ -21,38 +16,85 @@ python setup.py install
 # Library usage
 
 ```python 
-from txt2hpo.extract import hpo
+from txt2hpo.extract import Extractor
+extract = Extractor()
 
-hpo_ids = hpo("patient with developmental delay and hypotonia")
+result = extract.hpo("patient with developmental delay and hypotonia")
 
-print(hpo_ids)
+print(result.hpids)
 
-[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
- {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
+
+["HP:0001263", "HP:0001290"]
     
 ```
 
-`txt2hpo` will attempt to correct spelling errors by default, at the cost of slower processing speed.
+`txt2hpo` will attempt to correct spelling errors by default, at the cost of slower processing.
 This feature can be turned off by setting the `correct_spelling` flag to `False`. 
 
 ```python 
-from txt2hpo.extract import hpo
+from txt2hpo.extract import Extractor
+extract = Extractor(correct_spelling = False)
+result = extract.hpo("patient with devlopental delay and hyptonia")
 
-hpo_ids = hpo("patient with devlopental delay and hyptonia", correct_spelling=True)
+print(result.hpids)
 
-print(hpo_ids)
-
-[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
- {"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]
+[]
+ 
     
 ```
 
-`txt2hpo` outputs a valid JSON string, use`json.loads` to convert `txt2hpo` output to JSON/python list.
+`txt2hpo` handles negation using [negspaCy](https://spacy.io/universe/project/negspacy). To remove negated phenotypes set `remove_negated` flag to True.
+ 
 
-```python
-import json
-from txt2hpo.extract import hpo
-hpo_ids = json.loads(hpo(text_string))
+```python 
+from txt2hpo.extract import Extractor
+extract = Extractor(remove_negated=True)
+result = extract.hpo("patient has developmental delay but no hypotonia")
+
+print(result.hpids)
+
+["HP:0001263"]
+ 
+    
 ```
 
+`txt2hpo` picks the longest overlapping phenotype by default. To disable this feature set `remove_overlapping` flag to False.
+ 
+
+```python 
+from txt2hpo.extract import Extractor
+extract = Extractor(remove_overlapping=False)
+result = extract.hpo("patient with polycystic kidney disease")
+
+print(result.hpids)
+
+["HP:0000113", "HP:0000112"]
+
+
+extract = Extractor(remove_overlapping=True)
+result = extract.hpo("patient with polycystic kidney disease")
+
+print(result.hpids)
+
+["HP:0000113"]
+ 
+    
+```
+
+`txt2hpo` outputs a valid JSON string, which contains information about extracted HPIDs, their character span and matched string.
+
+```python 
+from txt2hpo.extract import Extractor
+extract = Extractor()
+
+result = extract.hpo("patient with developmental delay and hypotonia")
+
+print(result.json)
+
+
+'[{"hpid": ["HP:0001290"], "index": [37, 46], "matched": "hypotonia"}, 
+{"hpid": ["HP:0001263"], "index": [13, 32], "matched": "developmental delay"}]'
+
+    
+```
 

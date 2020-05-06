@@ -1,6 +1,7 @@
 import configparser
 import logging
 import os
+from gensim.models import KeyedVectors
 from txt2hpo import __project__, __version__
 
 # create logger
@@ -49,8 +50,17 @@ if not os.path.isfile(os.path.join(config_directory, 'txt2hpo.ini')):
             data_directory,
             'parsing_tree.pkl',
         ),
-
     }
+    config['models'] = {}
+    d2v_path = os.path.join(os.path.dirname(__file__), 'data/doc2vec_dm0_tagUniq_ep51_sa1e-05_vs40_ws18_mc5_neg5.wv.gz')
+    d2v_vw_path = os.path.join(data_directory, 'doc2vec.wv')
+    wv = KeyedVectors.load(d2v_path)
+    wv.save(d2v_vw_path)
+    config['models']['doc2vec'] = d2v_vw_path
+
+    config['data'] = {}
+    spellcheck_vocab_path = os.path.join(os.path.dirname(__file__), 'data/spellcheck_vocab_upd032020.json')
+    config['data']['spellcheck_vocab'] = spellcheck_vocab_path
 
     with open(os.path.join(config_directory, 'txt2hpo.ini'), 'w') as configfile:
         logger.info('writing config file to: %s '%config_directory)
@@ -65,4 +75,3 @@ else:
 
     config.read(config_file)
     logger.info(f'Using configuration file: {config_file}')
-

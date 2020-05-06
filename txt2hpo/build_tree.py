@@ -2,41 +2,48 @@ import configparser
 import pickle
 import sys
 from txt2hpo.config import logger, config
-from txt2hpo.nlp import nlp
+from txt2hpo.util import hpo_network
+from txt2hpo.nlp import nlp_sans_ner
 from txt2hpo.nlp import st
-from phenopy.config import config as phenopy_config
-
-from phenopy import generate_annotated_hpo_network
 
 
-obo_file = phenopy_config.get('hpo', 'obo_file')
-
-disease_to_phenotype_file = phenopy_config.get('hpo', 'disease_to_phenotype_file')
-
-hpo_network, alt2prim, disease_records = \
-    generate_annotated_hpo_network(obo_file,
-                                   disease_to_phenotype_file,
-                                   annotations_file=None,
-                                   ages_distribution_file=None
-                                   )
-
-def build_search_tree():
+def build_search_tree(custom_synonyms=None, masked_terms=None):
     """
     Build stemmed, search tree for phenotypes / n-grams
     :param hpo: hpo object from phenopy
+    :param custom_synonyms: dictionary of hpo-id (key), list of synonyms (value)
+    :param masked_terms: block specific hpids from parsing
     :return: nested dictionary
     """
+    if custom_synonyms == None:
+        custom_synonyms = {}
+
+    if masked_terms == None:
+        masked_terms = ['HP:0000001']
+    else:
+        masked_terms += ['HP:0000001']
+
     terms = {}
-    print("")
     logger.info('Building a stemmed parse tree, this may take a few seconds, dont worry this is a one time thing \n')
+
+    for hpid, synonyms in custom_synonyms.items():
+        if hpid in masked_terms:
+            continue
+        if hpid in hpo_network.nodes():
+            if 'synonyms' in hpo_network.nodes[hpid]:
+                hpo_network.nodes[hpid]['synonyms'] += synonyms
+            else:
+                hpo_network.nodes[hpid]['synonyms'] = synonyms
+
     i = 0
     n_nodes = len(hpo_network.nodes)
 
     for node in hpo_network:
+        if node in masked_terms:
+            continue
         term = hpo_network.nodes[node]['name']
         if 'synonyms' in hpo_network.nodes[node]:
             synonyms = hpo_network.nodes[node]['synonyms']
-
         else:
             synonyms = []
 
@@ -45,19 +52,24 @@ def build_search_tree():
         # extend names using custom rules
         extended_names = []
         for name in names:
-
-            extended_names.append(name)
+            name = name.replace(', ',' ')
+            name = name.replace(',', ' ')
+            extended_names.append(name.lower())
+            extended_names.append(name.capitalize())
+            extended_names.append(name.title())
+            extended_names.append(name.replace('-',' '))
             extended_names.append(name.replace('Abnormality', 'Disorder'))
 
         for name in extended_names:
 
-            tokens = nlp(name)
+            tokens = nlp_sans_ner(name)
             tokens = [st.stem(st.stem(x.lemma_.lower())) for x in tokens if not x.is_stop and not x.is_punct]
             for token in tokens:
                 if token not in terms:
                     terms[token] = {}
                 if len(tokens) not in terms[token]:
                     terms[token][len(tokens)] = {}
+
                 name_identifier = ' '.join(sorted(tokens))
                 if name_identifier not in terms[token][len(tokens)]:
                     terms[token][len(tokens)][name_identifier] = [node]
@@ -101,3 +113,4 @@ except (FileNotFoundError, TypeError, configparser.NoSectionError) as e:
     search_tree = build_search_tree()
     with open(config.get('tree', 'parsing_tree'), 'wb') as fh:
         pickle.dump(search_tree, fh)
+

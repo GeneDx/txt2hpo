@@ -11,8 +11,11 @@ pytest-cov = "*"
 [packages]
 nltk = "*"
 spacy = "*"
+scispacy = "*"
+negspacy = "*"
 phenopy = "*"
 networkx = "*"
+gensim = "*"
 
 [requires]
 python_version = "3.7"
