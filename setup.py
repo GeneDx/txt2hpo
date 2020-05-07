@@ -17,6 +17,7 @@ name=__project__,
     author='Vlad Gainullin <vgainullin@genedx.com>, Kevin Arvai <karvai@genedx.com>',
     author_email='<datascience@genedx.com>',
     license='',
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             f'{__project__} = {__project__}.__main__:main',
