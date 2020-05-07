@@ -1,1 +1,2 @@
 include txt2hpo/data/*.wv.gz
+include txt2hpo/data/*.json
