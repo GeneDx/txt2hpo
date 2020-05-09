@@ -4,6 +4,10 @@ import math
 from phenopy.config import config as phenopy_config
 from phenopy import generate_annotated_hpo_network
 
+import sys
+import subprocess
+import os
+
 
 obo_file = phenopy_config.get('hpo', 'obo_file')
 
@@ -57,3 +61,12 @@ def remove_key(dict_list, key):
         if key in d:
             del d[key]
     return dict_list
+
+
+def download_model(filename, user_pip_args=None):
+    download_url = filename
+    pip_args = ["--no-cache-dir"]
+    if user_pip_args:
+        pip_args.extend(user_pip_args)
+    cmd = [sys.executable, "-m", "pip", "install"] + pip_args + [download_url]
+    return subprocess.call(cmd, env=os.environ.copy())
