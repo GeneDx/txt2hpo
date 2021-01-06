@@ -72,7 +72,12 @@ def similarity_term_to_context(term, context, model):
     :return: float
     """
     def remove_out_of_vocab(tokens):
-        return [x for x in tokens if x in model.key_to_index]
+        try:
+            # gensim 3.8
+            return [x for x in tokens if x in model.vocab]
+        except AttributeError:
+            # gensim 4.0
+            return [x for x in tokens if x in model.wv.key_to_index]
 
     hpo_term = hpo_network.nodes[term]
     hpo_term_definition = hpo_term['name']
