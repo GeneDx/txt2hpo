@@ -96,7 +96,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
             {"hpid": ["HP:0000988"], "index": [18, 27], "matched": "skin rash"},
             {"hpid": ["HP:0000988"], "index": [23, 27], "matched": "rash"},
             {"hpid": ["HP:0008070"], "index": [33, 44], "matched": "sparse hair"},
-            ]
+           ]
         resp = extract.hpo("Male with eczema, skin rash, and sparse hair").entries_sans_context
         self.assertEqual(truth, resp)
 
@@ -413,3 +413,10 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
             # replace hyphens with space
             hpids = extract.hpo(test[0].replace('-', ' ')).hpids
             self.assertEqual(hpids, [test[1]])
+
+    #Designed to test whether or not we can differentiate between "blood group" and "blood group A" phenotype.
+    #Passing requires that we remove the term "A" from the list of stop words
+    def test_blood_group(self):
+        extract=Extractor(resolve_conflicts=False, correct_spelling=False)
+        extract=extract.hpo('blood group')
+        self.assertEqual(extract.hpids,['HP:0032370'])
