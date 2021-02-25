@@ -23,7 +23,6 @@ name=__project__,
         ]
     },
     install_requires=[
-        'phenopy',
         'pandas',
         'nltk',
         'spacy',

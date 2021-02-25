@@ -13,7 +13,7 @@ nltk = "*"
 spacy = "*"
 scispacy = "*"
 negspacy = "*"
-phenopy = "*"
+phenopy = {git = "https://github.com/GeneDx/phenopy.git", editable = true}
 networkx = "*"
 gensim = "<4.0"
 
