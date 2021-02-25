@@ -389,7 +389,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
 
     def test_handing_term_hyphenation(self):
-        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True)
+        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True, max_neighbors=3)
         hyphenated_phenos = \
             [
             (hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes() \
@@ -402,7 +402,6 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
             ]
         # Phenotypes where word-order is important is a limitation of current parsing method
         known_bugs = ['HP:0000510', 'HP:0030932']
-        #known_bugs = []
         long_phenos = ['HP:0011654', 'HP:0410303']
         hyphenated_phenos = [x for x in hyphenated_phenos if x[1] not in known_bugs + long_phenos]
 
