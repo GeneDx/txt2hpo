@@ -15,7 +15,7 @@ scispacy = "*"
 negspacy = "*"
 phenopy = "*"
 networkx = "*"
-gensim = "*"
+gensim = "<4.0"
 
 [requires]
 python_version = "3.7"
