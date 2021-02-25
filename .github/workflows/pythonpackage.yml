@@ -28,5 +28,5 @@ jobs:
         
     - name: Test with unittest
       run: |
-        pip install pytest
-        pipenv run pytest
+        pipenv install pytest
+        python -m pytest
