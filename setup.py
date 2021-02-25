@@ -27,7 +27,7 @@ name=__project__,
         'nltk==3.4.5',
         'spacy==2.2.4',
         'scispacy',
-        'negspacy',
+        'negspacy==0.1.9',
         'networkx',
         'gensim',
         'en_core_sci_sm'
