@@ -26,10 +26,10 @@ name=__project__,
         'pandas',
         'nltk==3.4.5',
         'spacy==2.2.4',
-        'scispacy',
+        'scispacy==0.2.5',
         'negspacy==0.1.9',
         'networkx',
-        'gensim',
+        'gensim==3.8.1',
         'en_core_sci_sm'
 
 

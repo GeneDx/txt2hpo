@@ -11,7 +11,7 @@ pytest-cov = "*"
 [packages]
 nltk = "3.4.5"
 spacy = "2.2.4"
-scispacy = "*"
+scispacy = "0.2.5"
 negspacy = "0.1.9"
 phenopy = {git = "https://github.com/GeneDx/phenopy.git", editable = true}
 networkx = "*"
