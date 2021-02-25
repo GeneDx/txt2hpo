@@ -10,7 +10,7 @@ from spacy.tokens import Token
 
 def nlp_model(negation_language="en"):
     try:
-        nlp = en_core_sci_sm.load(disable=["tagger", "parser"])
+        nlp = en_core_sci_sm.load(disable=["tagger", "parser", "lemmatizer"])
         nlp.add_pipe(nlp.create_pipe('sentencizer'))
         negex = Negex(nlp, language=negation_language, chunk_prefix=["no"])
         nlp.add_pipe(negex, last=True)
@@ -28,7 +28,7 @@ def nlp_model(negation_language="en"):
     return nlp
 
 try:
-    nlp_sans_ner = en_core_sci_sm.load(disable=["tagger", "parser", "ner"])
+    nlp_sans_ner = en_core_sci_sm.load(disable=["tagger", "parser", "ner", "lemmatizer"])
     logger.info('Using sci spacy language model\n')
 
 except OSError as e:
@@ -36,7 +36,7 @@ except OSError as e:
     logger.info('Performing a one-time download of an English language model\n')
     from spacy.cli import download
     download('en_core_web_sm')
-    nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner"])
+    nlp_sans_ner = spacy.load("en_core_web_sm", disable=["tagger", "parser", "ner", "lemmatizer"])
 
 # these are used in hpo as part of phenotype definition, should block from filtering
 remove_from_stops = "first second third fourth fifth under over front back behind ca above below without no not "
