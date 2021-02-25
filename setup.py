@@ -30,7 +30,7 @@ name=__project__,
         'negspacy',
         'networkx',
         'gensim',
-        'en_core_sci_sm==2.2.5'
+        'en_core_sci_sm'
 
 
     ],
