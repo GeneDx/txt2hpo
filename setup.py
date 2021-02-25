@@ -24,13 +24,13 @@ name=__project__,
     },
     install_requires=[
         'pandas',
-        'nltk',
-        'spacy',
+        'nltk=3.4.5',
+        'spacy=2.2.4',
         'scispacy',
         'negspacy',
         'networkx',
         'gensim',
-        'en_core_sci_sm'
+        'en_core_sci_sm=2.2.5'
 
 
     ],

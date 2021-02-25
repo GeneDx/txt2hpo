@@ -9,13 +9,13 @@ pytest = "*"
 pytest-cov = "*"
 
 [packages]
-nltk = "*"
-spacy = "*"
+nltk = "3.4.5"
+spacy = "2.2.4"
 scispacy = "*"
 negspacy = "*"
 phenopy = {git = "https://github.com/GeneDx/phenopy.git", editable = true}
 networkx = "*"
-gensim = "<4.0"
+gensim = "3.8.1"
 
 [requires]
 python_version = "3.7"
