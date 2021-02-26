@@ -24,15 +24,15 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor(correct_spelling=False)
 
         # Test extracting single phenotype
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonia"}]
+        truth = [{"hpid": ["HP:0001252"], "index": [0, 9], "matched": "Hypotonia"}]
         self.assertEqual(extract.hpo("Hypotonia").entries_sans_context, truth)
 
         # Test adding non phenotypic term
-        truth = [{"hpid": ["HP:0001290"], "index": [5, 14], "matched": "hypotonia"}]
+        truth = [{"hpid": ["HP:0001252"], "index": [5, 14], "matched": "hypotonia"}]
         self.assertEqual(extract.hpo("Word hypotonia").entries_sans_context, truth)
 
         # Test handling punctuation
-        truth = [{"hpid": ["HP:0001290"], "index": [6, 15], "matched": "hypotonia"}]
+        truth = [{"hpid": ["HP:0001252"], "index": [6, 15], "matched": "hypotonia"}]
         self.assertEqual(extract.hpo("Word, hypotonia").entries_sans_context, truth)
 
         # Test extracting a multiword phenotype
@@ -47,7 +47,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(extract.hpo("Delay developmental").entries_sans_context, truth)
 
         # Test extracting a phenotype with inflectional endings
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonic"}]
+        truth = [{"hpid": ["HP:0001252"], "index": [0, 9], "matched": "Hypotonic"}]
         self.assertEqual(extract.hpo("Hypotonic").entries_sans_context, truth)
 
         # Test extracting a multiword phenotype with inflectional endings and reversed order
@@ -71,7 +71,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
         # Test spellchecker
         extract = Extractor(correct_spelling=True)
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonic"}]
+        truth = [{"hpid": ["HP:0001252"], "index": [0, 9], "matched": "Hypotonic"}]
 
         self.assertEqual(extract.hpo("Hyptonic").entries_sans_context, truth)
 
@@ -105,7 +105,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         self.assertEqual(extract.hpo("RA").entries_sans_context, truth)
 
         # Test extracting multiple phenotypes
-        truth = [{"hpid": ["HP:0001290"], "index": [0, 9], "matched": "Hypotonia"},
+        truth = [{"hpid": ["HP:0001252"], "index": [0, 9], "matched": "Hypotonia"},
                             {"hpid": ["HP:0001263"], "index": [11, 30], "matched": "developmental delay"
                              }]
         self.assertEqual(extract.hpo("Hypotonia, developmental delay").entries_sans_context, truth)
@@ -114,7 +114,7 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         extract = Extractor(correct_spelling=False, max_length=20, chunk_by="max_length")
         truth = [
             {"hpid": ["HP:0001263"], "index": [0, 19], "matched": "Developmental delay"},
-            {"hpid": ["HP:0001290"], "index": [21, 30], "matched": "hypotonia"}
+            {"hpid": ["HP:0001252"], "index": [21, 30], "matched": "hypotonia"}
         ]
         self.assertEqual(extract.hpo("Developmental delay, hypotonia").entries_sans_context, truth)
 
