@@ -21,9 +21,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pipenv
-        pip install .
+        pipenv lock --keep-outdated --dev --requirements > requirements_temp.txt
+        pip install -r requirements_temp.txt
+        python setup.py develop
+        pip install -e .
+
 
     - name: Test with unittest
       run: |
-        pip install pytest
-        pipenv run pytest
+        pipenv run pytest tests
