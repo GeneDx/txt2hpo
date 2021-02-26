@@ -11,12 +11,13 @@ setup(
 name=__project__,
     packages=find_packages(),
     version=__version__,
-    description='Phenotype extraction using Named Entity Recognition',
+    description='HPO concept recognition and phenotype extraction tool',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Vlad Gainullin <vgainullin@genedx.com>, Kevin Arvai <karvai@genedx.com>',
     author_email='<datascience@genedx.com>',
     license='',
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             f'{__project__} = {__project__}.__main__:main',
@@ -33,6 +34,5 @@ name=__project__,
         'en_core_sci_sm'
 
 
-    ],
-    dependency_links=['https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.2.4/en_core_sci_sm-0.2.4.tar.gz#egg=en_core_sci_sm']
+    ]
 )
