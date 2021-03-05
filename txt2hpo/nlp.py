@@ -32,6 +32,7 @@ def nlp_model(negation_language="en"):
 
     return nlp
 
+
 try:
     import en_core_sci_sm
     nlp_sans_ner = en_core_sci_sm.load(disable=["tagger", "parser", "ner", "lemmatizer"])
@@ -53,7 +54,7 @@ except ModuleNotFoundError:
 
 # these are used in hpo as part of phenotype definition, should block from filtering
 remove_from_stops = "first second third fourth fifth under over front back behind ca above below without no not "
-remove_from_stops += "out up side right left more less during than take move full few all to i"
+remove_from_stops += "out up side right left more less during than take move full few all to i "
 
 for not_a_stop in remove_from_stops.split(" "):
     nlp_sans_ner.vocab[not_a_stop].is_stop = False

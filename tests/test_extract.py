@@ -4,7 +4,7 @@ import json
 from txt2hpo.extract import Extractor, Data, group_sequence
 from txt2hpo.data import load_model
 from tests.test_cases import *
-from txt2hpo.util import hpo_network
+from txt2hpo.util import hpo_network, non_phenos
 
 
 class ExtractPhenotypesTestCase(unittest.TestCase):
@@ -152,7 +152,8 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
     def test_hpo_big_text_spellcheck_off(self):
         # test parsing a page
         extract = Extractor(max_neighbors=2, correct_spelling=False, remove_overlapping=True)
-        self.assertEqual(extract.hpo(test_case11_text).n_entries, 7)
+        res = extract.hpo(test_case11_text)
+        self.assertEqual(res.n_entries, 7)
 
     def test_hpo_big_text_spellcheck_off_max3(self):
         # test parsing a page
@@ -319,6 +320,12 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("Wide gait and a wide mouth")
         self.assertEqual(truth, resp.json)
 
+    def test_extract_full_context(self):
+        extract = Extractor(max_neighbors=2, correct_spelling=False, phenotypes_only=False)
+        resp = extract.hpo("X linked")
+        self.assertEqual(resp.entries[0]['hpid'][0], 'HP:0001417')
+        self.assertEqual(resp.entries[0]['type'], 'mode_of_inheritance')
+
     def test_extract_without_negated(self):
 
         # negation should not apply if negation is part of matched string
@@ -388,8 +395,12 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
         resp = extract.hpo("Coloboma, microphthalmia, macrocephaly, ear pit.")
         self.assertEqual(set(resp.hpids), set(['HP:0000589', 'HP:0004467', 'HP:0000568', 'HP:0000256']))
 
-    def test_handing_term_hyphenation(self):
-        extract = Extractor(correct_spelling=False, remove_overlapping=True, resolve_conflicts=True, max_neighbors=3)
+    def test_handling_term_hyphenation(self):
+        extract = Extractor(correct_spelling=False,
+                            remove_overlapping=True,
+                            resolve_conflicts=True,
+                            max_neighbors=2,
+                            phenotypes_only=False)
         hyphenated_phenos = \
             [
             (hpo_network.nodes()[x]['name'], x) for x in hpo_network.nodes() \
@@ -401,10 +412,11 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
 
             ]
         # Phenotypes where word-order is important is a limitation of current parsing method
-        known_bugs = ['HP:0000510', 'HP:0030932']
-        long_phenos = ['HP:0011654', 'HP:0410303']
+        known_bugs = ['HP:0000510', 'HP:0030932', 'HP:0001215']
+        long_phenos = ['HP:0011654', 'HP:0410303', 'HP:0000654','HP:0000847','HP:0000864','HP:0000877','HP:0001074']
         hyphenated_phenos = [x for x in hyphenated_phenos if x[1] not in known_bugs + long_phenos]
-
+        hyphenated_phenos = [x for x in hyphenated_phenos if x[1] not in non_phenos]
+        hyphenated_phenos = hyphenated_phenos[:10]
         for test in hyphenated_phenos:
             # current version is not expected to extract very long phenotypes
             hpids = extract.hpo(test[0]).hpids
