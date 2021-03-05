@@ -4,9 +4,11 @@ import pandas as pd
 import numpy as np
 from txt2hpo.util import group_pairs, summarize_tuples, df_from_tuples
 from txt2hpo.config import logger
-from phenopy.util import half_product
 from functools import reduce
 
+
+def half_product():
+    raise NotImplemented
 
 def phenotype_distance(extracted_hpos):
     """
