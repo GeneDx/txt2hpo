@@ -7,8 +7,12 @@ from txt2hpo.config import logger
 from functools import reduce
 
 
-def half_product():
-    raise NotImplemented
+def half_product(num_rows, num_columns):
+    """yield combinations and the diagonal"""
+    for m in range(0, num_rows):
+        for n in range(m, num_columns):
+            yield (m, n)
+
 
 def phenotype_distance(extracted_hpos):
     """
