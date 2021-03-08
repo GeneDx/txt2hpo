@@ -24,14 +24,16 @@ name=__project__,
         ]
     },
     install_requires=[
-        'phenopy',
         'pandas',
-        'nltk',
-        'spacy',
-        'scispacy',
-        'negspacy',
+        'nltk==3.4.5',
+        'spacy==2.2.4',
+        'scispacy==0.2.4',
+        'negspacy==0.1.9',
         'networkx',
-        'gensim',
+        'obonet',
+        'requests',
+        'gensim==3.8.1',
+
 
     ]
 )

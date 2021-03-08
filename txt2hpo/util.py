@@ -1,24 +1,44 @@
 import pandas as pd
 
 import math
-from phenopy.config import config as phenopy_config
-from phenopy import generate_annotated_hpo_network
-
+import obonet
+import re
 import sys
 import subprocess
 import os
+import networkx as nx
+from txt2hpo.config import config
 
+# hpo_network = obonet.read_obo(obo_file)
 
-obo_file = phenopy_config.get('hpo', 'obo_file')
+obo_file = config.get('hpo', 'obo')
 
-disease_to_phenotype_file = phenopy_config.get('hpo', 'disease_to_phenotype_file')
+hpo_network = obonet.read_obo(obo_file)
+for node_id, data in hpo_network.nodes(data=True):
+    # clean synonyms
+    synonyms = []
+    if 'synonym' in data:
+        for synonym in data['synonym']:
+            synonyms.append(synonym)
+        hpo_network.nodes[node_id]['synonyms'] = re.findall(r'"(.*?)"', ','.join(synonyms))
 
-hpo_network, alt2prim, disease_records = \
-    generate_annotated_hpo_network(obo_file,
-                                   disease_to_phenotype_file,
-                                   annotations_file=None,
-                                   ages_distribution_file=None
-                                   )
+# roots for non-phenotype nodes
+non_phenotypes = {
+    'mortality_aging': 'HP:0040006',
+    'mode_of_inheritance': 'HP:0000005',
+    'clinical_modifier': 'HP:0012823',
+    'frequency': 'HP:0040279',
+    'clinical_course': 'HP:0031797',
+}
+
+non_phenos = {}
+# remove non-phenotype branches
+for name, hpo_id in non_phenotypes.items():
+    if hpo_id in hpo_network.nodes:
+        children = nx.ancestors(hpo_network, hpo_id)
+        for hpid in [hpo_id] + list(children):
+            non_phenos[hpid] = name
+
 
 def group_pairs(phenotype_pairs):
     """group unique keys and combine their values"""

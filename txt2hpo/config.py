@@ -1,16 +1,18 @@
 import configparser
 import logging
 import os
+import requests
+
 from gensim.models import KeyedVectors
 from txt2hpo import __project__, __version__
 
 # create logger
 logger = logging.getLogger(__project__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 # create console handler
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.ERROR)
 
 # create formatter and add it to the handler
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -57,6 +59,21 @@ if not os.path.isfile(os.path.join(config_directory, 'txt2hpo.ini')):
     wv = KeyedVectors.load(d2v_path)
     wv.save(d2v_vw_path)
     config['models']['doc2vec'] = d2v_vw_path
+
+    config['hpo'] = {}
+    obo_path = os.path.join(data_directory, 'hp.obo')
+
+    if os.path.isfile(obo_path):
+        config['hpo']['obo'] = obo_path
+    else:
+        url = "http://purl.obolibrary.org/obo/hp.obo"
+        r = requests.get(url, allow_redirects=True)
+        with open(obo_path, 'wb') as fh:
+            fh.write(r.content)
+        if os.path.isfile(obo_path):
+            config['hpo']['obo'] = obo_path
+        else:
+            logger.critical("Unable to download hp.obo from ", url)
 
     config['data'] = {}
     spellcheck_vocab_path = os.path.join(os.path.dirname(__file__), 'data/spellcheck_vocab_upd032020.json')

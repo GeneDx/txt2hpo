@@ -4,8 +4,14 @@ import pandas as pd
 import numpy as np
 from txt2hpo.util import group_pairs, summarize_tuples, df_from_tuples
 from txt2hpo.config import logger
-from phenopy.util import half_product
 from functools import reduce
+
+
+def half_product(num_rows, num_columns):
+    """yield combinations and the diagonal"""
+    for m in range(0, num_rows):
+        for n in range(m, num_columns):
+            yield (m, n)
 
 
 def phenotype_distance(extracted_hpos):
