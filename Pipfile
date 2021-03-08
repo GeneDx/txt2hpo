@@ -13,8 +13,6 @@ nltk = "==3.4.5"
 spacy = "==2.2.4"
 scispacy = "==0.2.4"
 negspacy = "==0.1.9"
-phenopy = {git = "https://github.com/GeneDx/phenopy.git", editable = true}
-networkx = "*"
 gensim = "==3.8.1"
 
 [requires]

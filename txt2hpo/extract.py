@@ -11,7 +11,7 @@ from txt2hpo.nlp import nlp_model, nlp_sans_ner, similarity_term_to_context
 from txt2hpo.nlp import st
 from txt2hpo.data import load_model
 from txt2hpo.build_tree import search_tree, build_search_tree
-from txt2hpo.util import remove_key
+from txt2hpo.util import remove_key, non_phenos
 
 
 class Data(object):
@@ -29,8 +29,11 @@ class Data(object):
     def remove(self, item):
         self.entries.remove(item)
 
-    def remove_tagged(self, tag, state=True):
-        to_remove = [entry for entry in self.entries if entry[tag] is state]
+    def remove_tagged(self, tag, state=True, status=True):
+        if status is True:
+            to_remove = [entry for entry in self.entries if entry[tag] == state]
+        else:
+            to_remove = [entry for entry in self.entries if entry[tag] != state]
         for element in to_remove:
             self.remove(element)
 
@@ -46,13 +49,24 @@ class Data(object):
                 entry['matched_words'] = []
             entry['is_negated'] = True if set(entry['negated']).intersection(set(entry['matched_words'])) else False
 
+    def label_terms(self):
+        for entry in self.entries:
+            for hpid in entry['hpid']:
+                if hpid in non_phenos:
+                    entry['type'] = non_phenos[hpid]
+                else:
+                    entry['type'] = 'phenotype'
+
+    def remove_non_phenos(self):
+        self.remove_tagged('type', state='phenotype', status=False)
+
     def remove_negated(self):
         self.detect_negation()
         self.remove_tagged('is_negated')
 
     def remove_overlapping(self):
         self._mark_overlapping()
-        self.remove_tagged('is_longest', False)
+        self.remove_tagged('is_longest', state=False)
 
     def _mark_overlapping(self):
         """
@@ -126,6 +140,7 @@ class Data(object):
         result = remove_key(result, 'context')
         result = remove_key(result, 'matched_tokens')
         result = remove_key(result, 'is_longest')
+        result = remove_key(result, 'type')
         return result
 
     @property
@@ -157,7 +172,8 @@ class Extractor:
                  model=None,
                  custom_synonyms=None,
                  negation_language="en",
-                 chunk_by='phrase'
+                 chunk_by='phrase',
+                 phenotypes_only=True,
                  ):
 
         self.correct_spelling = correct_spelling
@@ -169,6 +185,7 @@ class Extractor:
         self.context_window = context_window
         self.negation_model = nlp_model(negation_language=negation_language)
         self.chunk_by = chunk_by
+        self.phenotypes_only = phenotypes_only
         if custom_synonyms:
             self.search_tree = build_search_tree(custom_synonyms=custom_synonyms)
         else:
@@ -242,6 +259,10 @@ class Extractor:
 
         if self.remove_overlapping:
             extracted_terms.remove_overlapping()
+
+        extracted_terms.label_terms()
+        if self.phenotypes_only:
+            extracted_terms.remove_non_phenos()
 
         return extracted_terms
 

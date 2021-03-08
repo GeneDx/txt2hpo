@@ -30,6 +30,8 @@ name=__project__,
         'scispacy==0.2.4',
         'negspacy==0.1.9',
         'networkx',
+        'obonet',
+        'requests',
         'gensim==3.8.1',
 
 
