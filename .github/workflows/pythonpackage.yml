@@ -24,8 +24,8 @@ jobs:
         pipenv install pytest flake8 pytest-cov
         #pipenv lock --keep-outdated --dev --requirements > requirements_temp.txt
         #pip install -r requirements_temp.txt
-        #python setup.py develop
-        pip install -e .
+        python setup.py develop
+        #pip install -e .
 
 
     - name: Test with unittest
