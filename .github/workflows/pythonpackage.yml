@@ -20,8 +20,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install --upgrade pipenv
-        pipenv install pytest flake8 pytest-cov
+        #pip install --upgrade pipenv
+        pip install pytest flake8 pytest-cov
         #pipenv lock --keep-outdated --dev --requirements > requirements_temp.txt
         #pip install -r requirements_temp.txt
         python setup.py develop
@@ -30,4 +30,4 @@ jobs:
 
     - name: Test with unittest
       run: |
-        pipenv run pytest tests
+        pytest tests
