@@ -424,3 +424,33 @@ class ExtractPhenotypesTestCase(unittest.TestCase):
             # replace hyphens with space
             hpids = extract.hpo(test[0].replace('-', ' ')).hpids
             self.assertEqual(hpids, [test[1]])
+
+    def test_negated_hpo_retention(self):
+        extract = Extractor(correct_spelling=False,
+                            remove_overlapping=True,
+                            resolve_conflicts=True,
+                            max_neighbors=2,
+                            phenotypes_only=False,
+                            remove_negated=True)
+
+        resp = extract.hpo("Patient has developmental delay but no hypotonia")
+        self.assertEqual(["HP:0001252"], resp.negated_hpids)
+
+        resp = extract.hpo("developmental delay and a wide mouth")
+        self.assertEqual([], resp.negated_hpids)
+
+        resp = extract.hpo("developmental delay with no wide mouth")
+        self.assertEqual(['HP:0000154'], resp.negated_hpids)
+
+        resp = extract.hpo("developmental delay without a wide mouth")
+        self.assertEqual(['HP:0000154'], resp.negated_hpids)
+
+        resp = extract.hpo("no developmental delay, but has a wide mouth")
+        self.assertEqual(['HP:0001263'], resp.negated_hpids)
+
+        resp = extract.hpo("the patient has a wide mouth but no developmental delay.")
+        self.assertEqual(['HP:0001263'], resp.negated_hpids)
+
+        resp = extract.hpo("the patient does not have either a wide mouth or developmental delay.")
+        self.assertEqual(set(['HP:0000154', 'HP:0001263']), set(resp.negated_hpids))
+
