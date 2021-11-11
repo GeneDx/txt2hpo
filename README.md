@@ -52,8 +52,8 @@ print(result.hpids)
 ```
 
 `txt2hpo` handles negation using [negspaCy](https://spacy.io/universe/project/negspacy). To remove negated phenotypes set `remove_negated` flag to True.
+ Both the extracted and negated HPO terms can be retrieved.
  
-
 ```python 
 from txt2hpo.extract import Extractor
 extract = Extractor(remove_negated=True)
@@ -62,7 +62,10 @@ result = extract.hpo("patient has developmental delay but no hypotonia")
 print(result.hpids)
 
 ["HP:0001263"]
- 
+
+print(result.negated_hpids)
+
+["HP:0001252"]
     
 ```
 

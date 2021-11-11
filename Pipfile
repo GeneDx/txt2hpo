@@ -9,7 +9,7 @@ pytest = "*"
 pytest-cov = "*"
 
 [packages]
-nltk = "==3.4.5"
+nltk = "==3.6.5"
 spacy = "==2.2.4"
 scispacy = "==0.2.4"
 negspacy = "==0.1.9"

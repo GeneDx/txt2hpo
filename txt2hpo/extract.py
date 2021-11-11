@@ -22,6 +22,7 @@ class Data(object):
             self.entries = entries
         self.model = model
         self.negation_model = negation_model
+        self.negated_entries = []
 
     def add(self,entry):
         self.entries += entry
@@ -36,6 +37,7 @@ class Data(object):
             to_remove = [entry for entry in self.entries if entry[tag] != state]
         for element in to_remove:
             self.remove(element)
+            self.negated_entries.append(element)
 
     def detect_negation(self):
         for entry in self.entries:
@@ -123,6 +125,10 @@ class Data(object):
     @property
     def hpids(self):
         return list(set(np.array([x['hpid'] for x in self.entries]).flatten()))
+
+    @property
+    def negated_hpids(self):
+        return list(set(np.array([x['hpid'] for x in self.negated_entries]).flatten()))
 
     @property
     def json(self):
