@@ -26,7 +26,7 @@ logger.info(f'{__project__} {__version__}')
 
 
 # create config directory if it doesn't exist
-config_directory = os.path.join(os.environ.get('HOME'), f'.{__project__}')
+config_directory = os.path.join(os.path.expanduser('~'), f'.{__project__}')
 
 try:
     os.makedirs(config_directory)
